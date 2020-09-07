@@ -1,11 +1,11 @@
 
 目前已完成:
 
-- [x] DBnet
-- [x] PSEnet
-- [x] PANnet
-- [x] SASTnet
-- [x] CRNN
+- [x] DBnet [论文链接](https://arxiv.org/abs/1911.08947)
+- [x] PSEnet [论文链接](https://arxiv.org/abs/1903.12473)
+- [x] PANnet [论文链接](https://arxiv.org/pdf/1908.05900.pdf)
+- [x] SASTnet [论文链接](https://arxiv.org/abs/1908.05498)
+- [x] CRNN [论文链接](https://arxiv.org/abs/1507.05717)
 
 ### 检测模型
 
