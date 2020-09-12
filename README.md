@@ -110,11 +110,11 @@ python3 ./tools/rec_infer.py
 ```
 
 ### 参考
-https://github.com/PaddlePaddle/PaddleOCR
-https://github.com/whai362/PSENet
-https://github.com/whai362/pan_pp.pytorch
-https://github.com/WenmuZhou/PAN.pytorch
-https://github.com/xiaolai-sqlai/mobilenetv3
-https://github.com/BADBADBADBOY/DBnet-lite.pytorch
-https://github.com/BADBADBADBOY/Psenet_v2
-https://github.com/BADBADBADBOY/pse-lite.pytorch
+- https://github.com/PaddlePaddle/PaddleOCR
+- https://github.com/whai362/PSENet
+- https://github.com/whai362/pan_pp.pytorch
+- https://github.com/WenmuZhou/PAN.pytorch
+- https://github.com/xiaolai-sqlai/mobilenetv3
+- https://github.com/BADBADBADBOY/DBnet-lite.pytorch
+- https://github.com/BADBADBADBOY/Psenet_v2
+- https://github.com/BADBADBADBOY/pse-lite.pytorch
