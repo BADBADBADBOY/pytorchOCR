@@ -1,0 +1,82 @@
+base:
+  gpu_id: '0'
+  algorithm: PAN
+  pretrained: False
+  in_channels: [24, 40, 48, 96]
+  inner_channels: 96
+  classes: 6
+  crop_shape: [640,640]
+  shrink_ratio: 0.4
+  n_epoch: 600
+  show_step: 20
+  start_val: 300
+  save_epoch: 100
+  checkpoints: ./checkpoint
+  restore: False
+  restore_file: ./PAN.pth.tar
+
+backbone:
+  function: ptocr.model.backbone.det_mobilev3,mobilenet_v3_small
+
+head:
+#  function: ptocr.model.head.det_DBHead,DB_Head
+  function: ptocr.model.head.det_FPEM_FFM_Head,FPEM_FFM_Head
+#  function: ptocr.model.head.det_FPNHead,FPN_Head
+segout:
+  function: ptocr.model.segout.det_PAN_segout,SegDetector
+
+architectures:
+  model_function: ptocr.model.architectures.det_model,DetModel
+  loss_function: ptocr.model.architectures.det_model,DetLoss
+
+loss:
+  function: ptocr.model.loss.pan_loss,PANLoss
+  kernel_rate: 0.5
+  agg_dis_rate: 0.25
+
+#optimizer:
+#  function: ptocr.optimizer,AdamDecay
+#  base_lr: 0.002
+#  beta1: 0.9
+#  beta2: 0.999
+
+optimizer:
+  function: ptocr.optimizer,SGDDecay
+  base_lr: 0.001
+  momentum: 0.99
+  weight_decay: 0.00005
+
+# optimizer_decay:
+#   function: ptocr.optimizer,adjust_learning_rate_poly
+#   factor: 0.9
+  
+optimizer_decay:
+  function: ptocr.optimizer,adjust_learning_rate
+  schedule: [200,400,500]
+  gama: 0.1
+
+
+trainload:
+  function: ptocr.dataloader.DetLoad.PANProcess,PANProcessTrain
+  train_file: /src/notebooks/detect_text/icdar2015/train_list.txt
+  num_workers: 10
+  batch_size: 16
+
+testload:
+  function: ptocr.dataloader.DetLoad.PANProcess,PANProcessTest
+  test_file: /src/notebooks/detect_text/icdar2015/test_list.txt
+  test_gt_path: /src/notebooks/detect_text/icdar2015/ch4_test_gts/
+  test_size: 736
+  stride: 32
+  num_workers: 5
+  batch_size: 2
+
+postprocess:
+  function: ptocr.postprocess.PANpostprocess,PANPostProcess
+  is_poly: False
+  bin_th: 1
+  scale: 1
+  min_kernel_area: 8
+  min_text_area: 50
+  min_score: 0.93
+  dis_thresh: 6

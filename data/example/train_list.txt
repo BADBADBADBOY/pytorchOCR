@@ -1,0 +1,1 @@
+./data/example/image/img_1000.jpg ./data/example/icdar2015/label/gt_img_1000.txt
