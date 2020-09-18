@@ -1,4 +1,8 @@
 ## 基于pytorch的OCR库
+***
+最近跟新：
+- 2020.09.18 更新文本检测说明文档
+- 2020.09.12 更新DB,pse,pan,sast,crnn训练测试代码和预训练模型
 
 ***
 目前已完成:
@@ -64,6 +68,10 @@ python3 ./tools/rec_train.py
 ```
 python3 ./tools/rec_infer.py
 ```
+***
+### 文本检测效果
+<img src="./doc/show/ocr1.jpg" width=600 height=600 />     
+<img src="./doc/show/ocr2.jpg" width=600 height=600 />
 ***
 ### 参考
 - https://github.com/PaddlePaddle/PaddleOCR
