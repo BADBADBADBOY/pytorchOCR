@@ -72,8 +72,8 @@ python3 ./tools/rec_infer.py
 ### 文本检测效果
 <img src="./doc/show/ocr1.jpg" width=600 height=600 />     
 <img src="./doc/show/ocr2.jpg" width=600 height=600 />
-***
 
+***
 
 ### 参考
 - https://github.com/PaddlePaddle/PaddleOCR
