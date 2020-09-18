@@ -73,6 +73,8 @@ python3 ./tools/rec_infer.py
 <img src="./doc/show/ocr1.jpg" width=600 height=600 />     
 <img src="./doc/show/ocr2.jpg" width=600 height=600 />
 ***
+
+
 ### 参考
 - https://github.com/PaddlePaddle/PaddleOCR
 - https://github.com/whai362/PSENet
