@@ -1,0 +1,1 @@
+python ./script/pytorch_to_onnx.py --config ./config/det_DB_mobilev3.yaml --model_path ./checkpoint/ag_DB_bb_mobilenet_v3_small_he_DB_Head_bs_16_ep_1200/DB_best.pth.tar --img_path /src/notebooks/detect_text/icdar2015/ch4_test_images/img_10.jpg --save_path ./onnx/DBnet.onnx
