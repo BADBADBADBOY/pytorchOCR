@@ -1,0 +1,1 @@
+python3 ./script/onnx_to_tensorrt.py --onnx_path ./onnx/PAN-simple.onnx --trt_engine_path ./onnx/PAN.engine --img_path /src/notebooks/detect_text/icdar2015/ch4_test_images/img_10.jpg --batch_size 1 --algorithm PAN
