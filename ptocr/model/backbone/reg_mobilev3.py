@@ -77,9 +77,12 @@ class Block(nn.Module):
 
 
 class MobileNetV3_Large(nn.Module):
-    def __init__(self, ):
+    def __init__(self, is_gray):
         super(MobileNetV3_Large, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1, bias=False)
+        if(is_gray):
+            self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=2, padding=1, bias=False)
+        else:
+            self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.hs1 = hswish()
 
@@ -124,9 +127,12 @@ class MobileNetV3_Large(nn.Module):
 
 
 class MobileNetV3_Small(nn.Module):
-    def __init__(self, ):
+    def __init__(self, is_gray):
         super(MobileNetV3_Small, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1, bias=False)
+        if(is_gray):
+            self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=2, padding=1, bias=False)
+        else:
+            self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.hs1 = hswish()
 
@@ -179,32 +185,34 @@ class MobileNetV3_Small(nn.Module):
         out = self.bneck(out)
         return out
 
-def mobilenet_v3_small(pretrained,**kwargs):
-    model = MobileNetV3_Small()
+def mobilenet_v3_small(pretrained, is_gray=False,**kwargs):
+    model = MobileNetV3_Small(is_gray=is_gray)
     if pretrained:
         pretrained_dict = torch.load('./pre_model/mbv3_small.old.pth.tar')['state_dict']
-        try:
-            model.load_state_dict(pretrained_dict)
-        except:
-            state = model.state_dict()
-            for key in state.keys():
-                if 'module.' + key in pretrained_dict.keys():
+        
+        state = model.state_dict()
+        for key in state.keys():
+            if 'module.' + key in pretrained_dict.keys():
+                if(key=='conv1.weight'and is_gray):
+                    state[key] = torch.mean(pretrained_dict['module.' + key],1).unsqueeze(1)
+                else:
                     state[key] = pretrained_dict['module.' + key]
-            model.load_state_dict(state)
+        model.load_state_dict(state)
     return model
 
-def mobilenet_v3_large(pretrained,**kwargs):
-    model = MobileNetV3_Large()
+def mobilenet_v3_large(pretrained,is_gray=False,**kwargs):
+    model = MobileNetV3_Large(is_gray=is_gray)
     if pretrained:
         pretrained_dict = torch.load('./pre_model/mbv3_large.old.pth.tar')['state_dict']
-        try:
-            model.load_state_dict(pretrained_dict)
-        except:
-            state = model.state_dict()
-            for key in state.keys():
-                if 'module.'+key in pretrained_dict.keys():
-                    state[key] = pretrained_dict['module.'+key]
-            model.load_state_dict(state)
+        
+        state = model.state_dict()
+        for key in state.keys():
+            if 'module.'+key in pretrained_dict.keys():
+                if(key=='conv1.weight'and is_gray):
+                    state[key] = torch.mean(pretrained_dict['module.' + key],1).unsqueeze(1)
+                else:
+                    state[key] = pretrained_dict['module.' + key]
+        model.load_state_dict(state)
     return model
 
 
