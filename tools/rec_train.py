@@ -29,10 +29,15 @@ def worker_init_fn(worker_id):
     global GLOBAL_WORKER_ID
     GLOBAL_WORKER_ID = worker_id
     set_seed(GLOBAL_SEED + worker_id)
+    
+def backward_hook(self,grad_input, grad_output):
+    for g in grad_input:
+        g[g != g] = 0   # replace all nan/inf in gradients to zero
+
 
 def ModelTrain(train_data_loader,LabelConverter,model, criterion, optimizer, loss_bin, config, epoch):
     for batch_idx, data in enumerate(train_data_loader):
-        
+        model.register_backward_hook(backward_hook)
         if(data is None):
             continue
         imgs,labels = data 
@@ -96,9 +101,6 @@ def ModelEval(test_data_loader,LabelConverter,model,criterion,config):
         for pred, target in zip(sim_preds, labels):
             if pred == target:
                 n_correct += 1
-        if batch_idx>5:
-            break
-
     raw_preds = LabelConverter.decode(preds.data, preds_size.data, raw=True)[:config['base']['show_num']]
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, labels):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
@@ -129,7 +131,7 @@ def TrainValProgram(config):
     optimizer = create_module(config['optimizer']['function'])(config, model)
     optimizer_decay = create_module(config['optimizer_decay']['function'])
     
-   
+    
     train_data_loader = torch.utils.data.DataLoader(
             train_dataset,
             batch_size=config['trainload']['batch_size'],
@@ -215,5 +217,6 @@ def TrainValProgram(config):
 
 if __name__ == "__main__":
     stream = open('./config/rec_CRNN_vgg16_bn.yaml', 'r', encoding='utf-8')
+#     stream = open('./config/rec_CRNN_mobilev3.yaml', 'r', encoding='utf-8')
     config = yaml.load(stream,Loader=yaml.FullLoader)
     TrainValProgram(config)
