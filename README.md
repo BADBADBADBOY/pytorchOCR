@@ -39,36 +39,12 @@
 
 ### 文档教程
 - [文本检测](./doc/md/文本检测训练文档.md)
+- [文本识别](./doc/md/文本识别训练文档.md)
 - [pytorch转onnx](./doc/md/pytorch_to_onnx.md)
+
+
 ***
 
-### 文本识别
-#### 数据准备
-
-```
-image
-│   .jpg
-│   .jpg   
-│		...
-
-```
-需要一个train_list.txt , 格式：图片绝对路径+\t+label。 具体可参照项目中data/example中例子。如果训练过程中需要做验证，需要制作相同的数据格式有一个test_list.txt。
-
-#### 训练模型
-1. 修改./config中对应算法的yaml中参数，基本上只需修改数据路径即可。
-2. 在./tools/rec_train.py最下面打开不同的config中的yaml对应不同的算法
-3. 运行下面命令
-
-```
-python3 ./tools/rec_train.py
-```
-#### 测试模型
-1. 运行下面命令
-
-```
-python3 ./tools/rec_infer.py
-```
-***
 ### 文本检测效果
 <img src="./doc/show/ocr1.jpg" width=600 height=600 />     
 <img src="./doc/show/ocr2.jpg" width=600 height=600 />
