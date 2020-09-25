@@ -1,0 +1,9 @@
+/src/notebooks/detect_text/icdar2015/image/img_1000.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_1000.txt
+/src/notebooks/detect_text/icdar2015/image/img_100.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_100.txt
+/src/notebooks/detect_text/icdar2015/image/img_101.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_101.txt
+/src/notebooks/detect_text/icdar2015/image/img_102.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_102.txt
+/src/notebooks/detect_text/icdar2015/image/img_103.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_103.txt
+/src/notebooks/detect_text/icdar2015/image/img_104.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_104.txt
+/src/notebooks/detect_text/icdar2015/image/img_105.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_105.txt
+/src/notebooks/detect_text/icdar2015/image/img_106.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_106.txt
+/src/notebooks/detect_text/icdar2015/image/img_107.jpg	/src/notebooks/detect_text/icdar2015/label/gt_img_107.txt

@@ -62,7 +62,7 @@ class CRNN_Head(nn.Module):
         self.use_conv = use_conv
         if use_attention:
             self.attention = SeModule(inchannel)
-            self.use_attention = use_attention
+        self.use_attention = use_attention
         if(use_lstm):
             assert lstm_num>0 ,Exception('lstm_num need to more than 0 if use_lstm = True')
             for i in range(lstm_num):

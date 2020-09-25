@@ -14,9 +14,11 @@ import yaml
 from PIL import Image
 import numpy as np
 from tqdm import tqdm
+import onnxruntime
 import torchvision.transforms as transforms
 from ptocr.utils.util_function import create_module,resize_image
 from ptocr.utils.util_function import create_process_obj,create_dir,load_model
+from script.onnx_to_tensorrt import build_engine,allocate_buffers,do_inference
 
 def config_load(args):
     stream = open(args.config, 'r', encoding='utf-8')
@@ -24,38 +26,58 @@ def config_load(args):
     config['infer']['model_path'] = args.model_path
     config['infer']['path'] = args.img_path
     config['infer']['save_path'] = args.result_save_path
+    config['infer']['onnx_path'] = args.onnx_path
+    config['infer']['trt_path'] = args.trt_path
     return config
 
 
 class TestProgram():
     def __init__(self,config):
         super(TestProgram,self).__init__()
-        self.congig = config
-        model = create_module(config['architectures']['model_function'])(config)
+        self.config = config
+        if(config['infer']['trt_path'] is not None):
+            engine = build_engine(args.onnx_path,args.trt_engine_path,args.batch_size)
+            inputs, outputs, bindings, stream = allocate_buffers(engine)
+            context = engine.create_execution_context()
+            self.model = [context,inputs,outputs, bindings, stream]
+            self.infer_type = 'trt_infer'
+            
+        elif(config['infer']['onnx_path'] is not None):
+            self.model = onnxruntime.InferenceSession(config['infer']['onnx_path'])
+            self.infer_type = 'onnx_infer'
+        else:
+            model = create_module(config['architectures']['model_function'])(config)
+            model = load_model(model,config['infer']['model_path'])
+            if torch.cuda.is_available():
+                model = model.cuda()
+            self.model = model
+            self.model.eval()
+            self.infer_type = 'torch_infer'
+        
         img_process = create_module(config['postprocess']['function'])(config)
-        model = load_model(model,config['infer']['model_path'])
-        if torch.cuda.is_available():
-            model = model.cuda()
-        self.model = model
         self.img_process = img_process
-        self.model.eval()
+        
 
     def infer_img(self,ori_img):
-        img = resize_image(ori_img,self.congig['base']['algorithm'],self.congig['testload']['test_size'],stride=self.congig['testload']['stride'])
+        img = resize_image(ori_img,self.config['base']['algorithm'],self.config['testload']['test_size'],stride=self.config['testload']['stride'])
         img = Image.fromarray(img).convert('RGB')
         img = transforms.ToTensor()(img)
         img = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(img).unsqueeze(0)
-        if torch.cuda.is_available():
-            img = img.cuda()
-            
-        with torch.no_grad():
-            out = self.model(img)
-
+        if(self.infer_type == 'torch_infer'):
+            if torch.cuda.is_available():
+                img = img.cuda()   
+            with torch.no_grad():
+                out = self.model(img)
+        elif(self.infer_type == 'onnx_infer'):
+            out = self.model.run(['out'], {'input': img.numpy()})
+            out = torch.Tensor(out[0])
+        else:
+            pass
         if (config['base']['algorithm'] == 'SAST'):
             scale = ((out['f_score'].shape[2]*4)/ori_img.shape[0],(out['f_score'].shape[3]*4)/ori_img.shape[1] ,ori_img.shape[0],ori_img.shape[1])
         else:
             scale = (ori_img.shape[1] * 1.0 / out.shape[3], ori_img.shape[0] * 1.0 / out.shape[2])
-        out = create_process_obj(self.congig['base']['algorithm'],out)
+        out = create_process_obj(self.config['base']['algorithm'],out)
         bbox_batch, score_batch = self.img_process(out, [scale])
         return bbox_batch,score_batch
 
@@ -107,6 +129,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Hyperparams')
     parser.add_argument('--config', help='config file path')
     parser.add_argument('--model_path', nargs='?', type=str, default=None)
+    parser.add_argument('--onnx_path', nargs='?', type=str, default=None)
+    parser.add_argument('--trt_path', nargs='?', type=str, default=None)
     parser.add_argument('--img_path', nargs='?', type=str, default=None)
     parser.add_argument('--result_save_path', nargs='?', type=str, default=None)
     args = parser.parse_args()

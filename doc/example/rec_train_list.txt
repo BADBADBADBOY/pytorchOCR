@@ -1,0 +1,10 @@
+/src/notebooks/detect_text/icdar2015/recognize/image/word_1.png	Genaxis Theatre
+/src/notebooks/detect_text/icdar2015/recognize/image/word_2.png	[06]
+/src/notebooks/detect_text/icdar2015/recognize/image/word_3.png	62-03
+/src/notebooks/detect_text/icdar2015/recognize/image/word_4.png	Carpark
+/src/notebooks/detect_text/icdar2015/recognize/image/word_5.png	EXIT
+/src/notebooks/detect_text/icdar2015/recognize/image/word_6.png	I2R
+/src/notebooks/detect_text/icdar2015/recognize/image/word_7.png	fusionopolis
+/src/notebooks/detect_text/icdar2015/recognize/image/word_8.png	fusionopolis
+/src/notebooks/detect_text/icdar2015/recognize/image/word_9.png	Reserve
+/src/notebooks/detect_text/icdar2015/recognize/image/word_10.png	CAUTION

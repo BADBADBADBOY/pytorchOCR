@@ -38,8 +38,8 @@
 ***
 
 ### 文档教程
-- [文本检测](./doc/文本检测训练文档.md)
-
+- [文本检测](./doc/md/文本检测训练文档.md)
+- [pytorch转onnx](./doc/md/pytorch_to_onnx.md)
 ***
 
 ### 文本识别

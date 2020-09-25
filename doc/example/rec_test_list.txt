@@ -1,0 +1,13 @@
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_1.png	JOINT
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_2.png	yourself
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_3.png	154
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_4.png	197
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_5.png	727
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_6.png	198
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_7.png	20029
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_8.png	Free
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_9.png	from
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_10.png	PAIN
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_11.png	BLOCK
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_12.png	441B
+/src/notebooks/detect_text/icdar2015/recognize/test_img/word_13.png	STOREY

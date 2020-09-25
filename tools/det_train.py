@@ -12,6 +12,7 @@ import os
 import random
 import numpy as np
 from tqdm import tqdm
+import argparse
 np.seterr(divide='ignore', invalid='ignore')
 import yaml
 import torch.utils.data
@@ -23,6 +24,8 @@ from ptocr.utils.cal_iou_acc import cal_DB,cal_PAN_PSE
 from tools.cal_rescall.script import cal_recall_precison_f1
 # from ptocr.dataloader.DetLoad.SASTProcess import alignCollate
 from ptocr.utils.util_function import create_process_obj
+from ptocr.utils.prune_script import updateBN
+
 
 GLOBAL_WORKER_ID = None
 GLOBAL_SEED = 123456
@@ -38,7 +41,7 @@ def worker_init_fn(worker_id):
     GLOBAL_WORKER_ID = worker_id
     set_seed(GLOBAL_SEED + worker_id)
 
-def ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, config, epoch):
+def ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, args,config, epoch):
     if(config['base']['algorithm']=='DB' or config['base']['algorithm']=='SAST'):
         running_metric_text = runningScore(2)
     else:
@@ -51,6 +54,8 @@ def ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, config,
         loss, metrics = criterion(pre_batch, gt_batch)
         optimizer.zero_grad()
         loss.backward()
+        if(args.sr_lr is not None):
+            updateBN(model,args)
         optimizer.step()
 
         for key in loss_bin.keys():
@@ -128,16 +133,18 @@ def ModelEval(test_dataset, test_data_loader, model, imgprocess, checkpoints,con
     result_dict = cal_recall_precison_f1(config['testload']['test_gt_path'],os.path.join(checkpoints, 'val', 'res_txt'))
     return result_dict['recall'],result_dict['precision'],result_dict['hmean']
 
-def TrainValProgram(config):
+def TrainValProgram(args):
+    
+    config = yaml.load(open(args.config, 'r', encoding='utf-8'),Loader=yaml.FullLoader)
     os.environ["CUDA_VISIBLE_DEVICES"] = config['base']['gpu_id']
-
     create_dir(config['base']['checkpoints'])
     checkpoints = os.path.join(config['base']['checkpoints'],
-                               "ag_%s_bb_%s_he_%s_bs_%d_ep_%d" % (config['base']['algorithm'],
+                               "ag_%s_bb_%s_he_%s_bs_%d_ep_%d_%s" % (config['base']['algorithm'],
                                                       config['backbone']['function'].split(',')[-1],
                                                       config['head']['function'].split(',')[-1],
                                                       config['trainload']['batch_size'],
-                                                      config['base']['n_epoch']))
+                                                      config['base']['n_epoch'],
+                                                      args.log_str))
     create_dir(checkpoints)
 
     model = create_module(config['architectures']['model_function'])(config)
@@ -199,7 +206,7 @@ def TrainValProgram(config):
     for epoch in range(start_epoch,config['base']['n_epoch']):
         model.train()
         optimizer_decay(config, optimizer, epoch)
-        loss_write = ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, config, epoch)
+        loss_write = ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, args,config, epoch)
 
         if(epoch >= config['base']['start_val']):
             create_dir(os.path.join(checkpoints,'val'))
@@ -239,6 +246,11 @@ def TrainValProgram(config):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Hyperparams')
+    parser.add_argument('--config', help='config file path')
+    parser.add_argument('--log_str', help='config file path')
+    parser.add_argument('--sr_lr', nargs='?', type=float, default=None)
+    args = parser.parse_args()
 
 #     stream = open('./config/det_DB_mobilev3.yaml', 'r', encoding='utf-8')
 #     stream = open('./config/det_DB_mobilev3_common.yaml', 'r', encoding='utf-8')
@@ -252,8 +264,8 @@ if __name__ == "__main__":
 #     stream = open('./config/det_SAST_resnet50.yaml', 'r', encoding='utf-8')
 
 #     stream = open('./config/det_PAN_mobilev3.yaml', 'r', encoding='utf-8')
-    stream = open('./config/det_PAN_resnet18.yaml', 'r', encoding='utf-8')
+#     stream = open('./config/det_PAN_resnet18.yaml', 'r', encoding='utf-8')
 #     stream = open('./config/det_PAN_resnet18_3*3.yaml', 'r', encoding='utf-8')
 
-    config = yaml.load(stream,Loader=yaml.FullLoader)
-    TrainValProgram(config)
+    
+    TrainValProgram(args)
