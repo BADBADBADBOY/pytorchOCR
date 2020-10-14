@@ -36,6 +36,25 @@
 |PAN|ResNet18_7*7|81.80%|77.08%|79.37%|[下载链接](https://pan.baidu.com/s/1zONYFPsS3szaf5BHeQh5ZA)(code:fxw6)|
 |PAN|ResNet18_3*3|83.78%|75.15%|79.23%|[下载链接](https://pan.baidu.com/s/1zONYFPsS3szaf5BHeQh5ZA)(code:fxw6)|
 ***
+### 模型压缩剪枝效果
+
+这里使用mobilev3作为backbone，在icdar2015上测试结果，未压缩模型初始大小为2.4M.
+1. 对backbone进行压缩
+|模型|pruned method|ratio|model size(M)|precision|recall|Hmean
+|-|-|-|-|-|
+|DB|no|0|2.4|84.04%|75.34%|79.46%
+|DB|backbone|0.5|1.9|83.74%|73.18%|78.10%
+|DB|backbone|0.6|1.58|84.46%|69.90%|76.50%
+2. 对整个模型进行压缩
+|模型|pruned method|ratio|model size(M)|precision|recall|Hmean
+|-|-|-|-|-|
+|DB|no|0|2.4|85.70%|74.77%|79.86%
+|DB|total|0.6|1.42|82.97%|75.10%|78.84%
+|DB|total|0.65|1.15|83.74%|73.18%|78.10%
+
+
+
+***
 
 ### 文档教程
 - [文本检测](./doc/md/文本检测训练文档.md)
