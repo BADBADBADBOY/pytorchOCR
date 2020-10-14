@@ -39,18 +39,22 @@
 ### 模型压缩剪枝效果
 
 这里使用mobilev3作为backbone，在icdar2015上测试结果，未压缩模型初始大小为2.4M.
+
 1. 对backbone进行压缩
+
 |模型|pruned method|ratio|model size(M)|precision|recall|Hmean
-|-|-|-|-|-|
-|DB|no|0|2.4|84.04%|75.34%|79.46%
-|DB|backbone|0.5|1.9|83.74%|73.18%|78.10%
-|DB|backbone|0.6|1.58|84.46%|69.90%|76.50%
+|-|-|-|-|-|-|-|
+|DB|no|0|2.4|84.04%|75.34%|79.46%|																																																						
+|DB|backbone|0.5|1.9|83.74%|73.18%|78.10%|
+|DB|backbone|0.6|1.58|84.46%|69.90%|76.50%|
+
 2. 对整个模型进行压缩
-|模型|pruned method|ratio|model size(M)|precision|recall|Hmean
-|-|-|-|-|-|
-|DB|no|0|2.4|85.70%|74.77%|79.86%
-|DB|total|0.6|1.42|82.97%|75.10%|78.84%
-|DB|total|0.65|1.15|83.74%|73.18%|78.10%
+
+|模型|pruned method|ratio|model size(M)|precision|recall|Hmean|
+|-|-|-|-|-|-|-|
+|DB|no|0|2.4|85.70%|74.77%|79.86%|
+|DB|total|0.6|1.42|82.97%|75.10%|78.84%|
+|DB|total|0.65|1.15|83.74%|73.18%|78.10%|
 
 
 
