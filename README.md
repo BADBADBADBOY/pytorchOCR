@@ -56,7 +56,7 @@
 |DB|total|0.6|1.42|82.97%|75.10%|78.84%|
 |DB|total|0.65|1.15|83.74%|73.18%|78.10%|
 ***
-模型蒸馏
+### 模型蒸馏
 
 |模型|teacher|student|model size(M)|precision|recall|Hmean|improve(%)|
 |-|-|-|-|-|-|-|-|
