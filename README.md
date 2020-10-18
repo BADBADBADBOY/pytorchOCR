@@ -64,7 +64,7 @@
 |模型|teacher|student|model size(M)|precision|recall|Hmean|improve(%)|
 |-|-|-|-|-|-|-|-|
 |DB|no|mobilev3|1.42|82.97%|75.10%|78.84%|-|
-|DB|resnet50|mobilev3|1.42|85.14%|75.34%|79.94%|1.10|
+|DB|resnet50|mobilev3|1.42|85.88%|76.16%|80.73%|1.89|
 |DB|no|mobilev3|1.15|85.14%|72.84%|78.51%|-|
 |DB|resnet50|mobilev3|1.15|85.60%|74.72%|79.79%|1.28|
 
