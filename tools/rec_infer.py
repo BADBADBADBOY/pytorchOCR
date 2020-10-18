@@ -21,22 +21,22 @@ from ptocr.utils.util_function import create_process_obj,create_dir,load_model
 class TestProgram():
     def __init__(self,config):
         super(TestProgram,self).__init__()
-        self.congig = config
+        
         self.converter = create_module(config['label_transform']['function'])(config)
+        config['base']['classes'] = len(self.converter.alphabet)
         model = create_module(config['architectures']['model_function'])(config)
         model = load_model(model,config['infer']['model_path'])
         if torch.cuda.is_available():
             model = model.cuda()
         self.model = model
+        self.congig = config
         self.model.eval()
 
     def infer_img(self,ori_img):
         img = resize_image(ori_img,self.congig['base']['algorithm'],32)
         img = Image.fromarray(img).convert('RGB')
         if(self.congig['base']['is_gray']):
-            img = Image.fromarray(img).convert('L')
-        else:
-            img = Image.fromarray(img).convert('RGB')
+            img = img.convert('L')
         img = transforms.ToTensor()(img)
         img.sub_(0.5).div_(0.5)
         img = img.unsqueeze(0)
@@ -45,10 +45,10 @@ class TestProgram():
             
         with torch.no_grad():
             preds = self.model(img)
-            
+        preds_size = torch.IntTensor([preds.size(0)])   
         _, preds = preds.max(2)
         preds = preds.squeeze(1)
-        preds = preds.transpose(1, 0).contiguous().view(-1)
+        preds = preds.contiguous().view(-1)
         sim_preds = self.converter.decode(preds.data, preds_size.data, raw=False)
         
         return sim_preds
@@ -77,6 +77,6 @@ def InferImage(config):
 
 
 if __name__ == "__main__":
-    stream = open('./config/rec_CRNN_vgg16_bn.yaml', 'r', encoding='utf-8')
+    stream = open('./config/rec_CRNN_ori.yaml', 'r', encoding='utf-8')
     config = yaml.load(stream,Loader=yaml.FullLoader)
     InferImage(config)

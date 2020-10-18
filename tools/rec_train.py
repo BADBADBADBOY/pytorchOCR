@@ -9,6 +9,7 @@ sys.path.append('./')
 import cv2
 import torch
 import os
+import argparse
 import numpy as np
 from tqdm import tqdm
 from torch.autograd import Variable
@@ -19,8 +20,9 @@ from ptocr.utils.util_function import create_module, create_loss_bin, \
 set_seed,save_checkpoint,create_dir
 from ptocr.utils.metrics import runningScore
 from ptocr.utils.logger import Logger
-from ptocr.utils.util_function import create_process_obj
+from ptocr.utils.util_function import create_process_obj,merge_config
 from ptocr.dataloader.RecLoad.CRNNProcess import alignCollate
+
 
 GLOBAL_WORKER_ID = None
 GLOBAL_SEED = 2020
@@ -30,14 +32,14 @@ def worker_init_fn(worker_id):
     GLOBAL_WORKER_ID = worker_id
     set_seed(GLOBAL_SEED + worker_id)
     
-def backward_hook(self,grad_input, grad_output):
-    for g in grad_input:
-        g[g != g] = 0   # replace all nan/inf in gradients to zero
+# def backward_hook(self,grad_input, grad_output):
+#     for g in grad_input:
+#         g[g != g] = 0   # replace all nan/inf in gradients to zero
 
 
 def ModelTrain(train_data_loader,LabelConverter,model, criterion, optimizer, loss_bin, config, epoch):
     for batch_idx, data in enumerate(train_data_loader):
-        model.register_backward_hook(backward_hook)
+#         model.register_backward_hook(backward_hook)
         if(data is None):
             continue
         imgs,labels = data 
@@ -111,15 +113,20 @@ def ModelEval(test_data_loader,LabelConverter,model,criterion,config):
     return val_acc,val_loss
 
 def TrainValProgram(config):
+    
+    config = yaml.load(open(args.config, 'r', encoding='utf-8'),Loader=yaml.FullLoader)
+    config = merge_config(config,args)
+    
     os.environ["CUDA_VISIBLE_DEVICES"] = config['base']['gpu_id']
 
     create_dir(config['base']['checkpoints'])
     checkpoints = os.path.join(config['base']['checkpoints'],
-                               "ag_%s_bb_%s_he_%s_bs_%d_ep_%d" % (config['base']['algorithm'],
+                               "ag_%s_bb_%s_he_%s_bs_%d_ep_%d_%s" % (config['base']['algorithm'],
                                                       config['backbone']['function'].split(',')[-1],
                                                       config['head']['function'].split(',')[-1],
                                                       config['trainload']['batch_size'],
-                                                      config['base']['n_epoch']))
+                                                      config['base']['n_epoch'],
+                                                      args.log_str))
     create_dir(checkpoints)
     
     LabelConverter = create_module(config['label_transform']['function'])(config)
@@ -216,7 +223,12 @@ def TrainValProgram(config):
 
 
 if __name__ == "__main__":
-    stream = open('./config/rec_CRNN_vgg16_bn.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/rec_CRNN_mobilev3.yaml', 'r', encoding='utf-8')
-    config = yaml.load(stream,Loader=yaml.FullLoader)
-    TrainValProgram(config)
+    
+    
+    parser = argparse.ArgumentParser(description='Hyperparams')
+    parser.add_argument('--config', help='config file path')
+    parser.add_argument('--log_str', help='log title')
+    args = parser.parse_args()
+
+    
+    TrainValProgram(args)

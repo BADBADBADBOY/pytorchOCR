@@ -23,8 +23,9 @@ from ptocr.utils.logger import Logger
 from ptocr.utils.cal_iou_acc import cal_DB,cal_PAN_PSE
 from tools.cal_rescall.script import cal_recall_precison_f1
 # from ptocr.dataloader.DetLoad.SASTProcess import alignCollate
-from ptocr.utils.util_function import create_process_obj
-from ptocr.utils.prune_script import updateBN
+from ptocr.utils.util_function import create_process_obj,merge_config,load_model
+from ptocr.utils.prune_script import updateBN,load_prune_model
+from ptocr.utils.gen_teacher_model import GetTeacherModel,DistilLoss
 
 
 GLOBAL_WORKER_ID = None
@@ -41,7 +42,7 @@ def worker_init_fn(worker_id):
     GLOBAL_WORKER_ID = worker_id
     set_seed(GLOBAL_SEED + worker_id)
 
-def ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, args,config, epoch):
+def ModelTrain(train_data_loader,t_model,t_criterion, model, criterion, optimizer, loss_bin, args,config, epoch):
     if(config['base']['algorithm']=='DB' or config['base']['algorithm']=='SAST'):
         running_metric_text = runningScore(2)
     else:
@@ -51,7 +52,18 @@ def ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, args,co
         if(data is None):
             continue
         pre_batch, gt_batch = model(data)
+        
+        if(t_model is not None):
+            with torch.no_grad():
+                t_pre_batch,_ = t_model(data)
+            distil_loss = t_criterion(pre_batch,t_pre_batch)
+            
         loss, metrics = criterion(pre_batch, gt_batch)
+        
+        if(t_model is not None):
+            loss = args.t_ratio*loss+(1-args.t_ratio)*distil_loss
+            metrics['loss_distil'] = distil_loss
+        
         optimizer.zero_grad()
         loss.backward()
         if(args.sr_lr is not None):
@@ -136,6 +148,8 @@ def ModelEval(test_dataset, test_data_loader, model, imgprocess, checkpoints,con
 def TrainValProgram(args):
     
     config = yaml.load(open(args.config, 'r', encoding='utf-8'),Loader=yaml.FullLoader)
+    config = merge_config(config,args)
+    
     os.environ["CUDA_VISIBLE_DEVICES"] = config['base']['gpu_id']
     create_dir(config['base']['checkpoints'])
     checkpoints = os.path.join(config['base']['checkpoints'],
@@ -154,6 +168,12 @@ def TrainValProgram(args):
     optimizer = create_module(config['optimizer']['function'])(config, model)
     optimizer_decay = create_module(config['optimizer_decay']['function'])
     img_process = create_module(config['postprocess']['function'])(config)
+    
+    if args.t_config is not None:
+        t_model = GetTeacherModel(args)
+        distil_loss = DistilLoss()
+        if torch.cuda.is_available():
+            distil_loss = distil_loss.cuda()
    
     train_data_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -171,8 +191,11 @@ def TrainValProgram(args):
         num_workers=config['testload']['num_workers'],
         drop_last=True,
         pin_memory=True)
-
-    loss_bin = create_loss_bin(config['base']['algorithm'])
+    
+    use_distil = False
+    if args.t_config is not None:
+        use_distil = True
+    loss_bin = create_loss_bin(config['base']['algorithm'],use_distil)
 
     if torch.cuda.is_available():
         if (len(config['base']['gpu_id'].split(',')) > 1):
@@ -184,8 +207,16 @@ def TrainValProgram(args):
     start_epoch = 0
     rescall, precision, hmean = 0,0,0
     best_rescall,best_precision ,best_hmean= 0,0,0
-    
-    if config['base']['restore']:
+
+    if args.pruned_model_dict_path is not None:
+        print('finetune the pruend model.')
+        model = load_prune_model(model,args.prune_model_path,args.pruned_model_dict_path,args.prune_type)
+        log_write = Logger(os.path.join(checkpoints, 'log.txt'), title=config['base']['algorithm'])
+        title = list(loss_bin.keys())
+        title.extend(['piexl_acc','piexl_iou','t_rescall','t_precision','t_hmean','b_rescall','b_precision','b_hmean'])
+        log_write.set_names(title)
+        
+    elif config['base']['restore']:
         print('Resuming from checkpoint.')
         assert os.path.isfile(config['base']['restore_file']), 'Error: no checkpoint file found!'
         checkpoint = torch.load(config['base']['restore_file'])
@@ -202,11 +233,19 @@ def TrainValProgram(args):
         title = list(loss_bin.keys())
         title.extend(['piexl_acc','piexl_iou','t_rescall','t_precision','t_hmean','b_rescall','b_precision','b_hmean'])
         log_write.set_names(title)
-    
+        
+    if args.start_epoch is not None:
+        start_epoch = args.start_epoch
+        
     for epoch in range(start_epoch,config['base']['n_epoch']):
         model.train()
+        if args.t_config is not None:
+            t_model.train()
+        else:
+            t_model = None
+            distil_loss = None
         optimizer_decay(config, optimizer, epoch)
-        loss_write = ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, args,config, epoch)
+        loss_write = ModelTrain(train_data_loader,t_model,distil_loss,model, criterion, optimizer, loss_bin, args,config, epoch)
 
         if(epoch >= config['base']['start_val']):
             create_dir(os.path.join(checkpoints,'val'))
@@ -248,24 +287,21 @@ def TrainValProgram(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Hyperparams')
     parser.add_argument('--config', help='config file path')
-    parser.add_argument('--log_str', help='config file path')
+    parser.add_argument('--t_config',default=None, help='config file path')
+    parser.add_argument('--t_model_path',default=None, help='teacher model path')
+    parser.add_argument('--t_ratio', nargs='?', type=float, default=0.5)
+    parser.add_argument('--log_str', help='log title')
     parser.add_argument('--sr_lr', nargs='?', type=float, default=None)
-    args = parser.parse_args()
-
-#     stream = open('./config/det_DB_mobilev3.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_DB_mobilev3_common.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_DB_resnet50.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_DB_resnet50_3*3.yaml', 'r', encoding='utf-8')
-
-#     stream = open('./config/det_PSE_mobilev3.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_PSE_resnet50.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_PSE_resnet50_3*3.yaml', 'r', encoding='utf-8')
-
-#     stream = open('./config/det_SAST_resnet50.yaml', 'r', encoding='utf-8')
-
-#     stream = open('./config/det_PAN_mobilev3.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_PAN_resnet18.yaml', 'r', encoding='utf-8')
-#     stream = open('./config/det_PAN_resnet18_3*3.yaml', 'r', encoding='utf-8')
-
     
+    parser.add_argument('--pruned_model_dict_path', help='config file path',default=None)
+    parser.add_argument('--prune_type',type=str, help='prune type,total or backbone')
+    parser.add_argument('--prune_model_path', help='model file path')
+    
+    parser.add_argument('--n_epoch', nargs='?', type=int, default=600)
+    parser.add_argument('--start_epoch', nargs='?', type=int, default=None)
+    parser.add_argument('--start_val', nargs='?', type=int, default=400)
+    parser.add_argument('--base_lr', nargs='?', type=float, default=0.001)
+    parser.add_argument('--gpu_id', help='config file path')
+    
+    args = parser.parse_args()
     TrainValProgram(args)
