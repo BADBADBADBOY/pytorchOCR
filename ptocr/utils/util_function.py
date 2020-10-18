@@ -20,6 +20,35 @@ def create_module(module_str):
     function = getattr(somemodule, function_name)
     return function
 
+def resize_image_batch(img,algorithm,side_len=1536,add_padding=True):
+
+    if(algorithm=='SAST'):
+        stride = 128
+    else:
+        stride = 32
+    height, width, _ = img.shape
+    flag = None
+    if height > width:
+        flag = True
+        new_height = side_len
+        new_width = int(math.ceil(new_height / height * width / stride) * stride)
+    else:
+        flag = False
+        new_width = side_len
+        new_height = int(math.ceil(new_width / width * height / stride) * stride)
+    resized_img = cv2.resize(img, (new_width, new_height))
+    scale = (float(width)/new_width,float(height)/new_height)
+    if add_padding is True:
+        if flag:
+            padded_image = cv2.copyMakeBorder(resized_img, 0, 0,
+                          0, side_len-new_width, cv2.BORDER_CONSTANT, value=(0,0,0))
+        else:
+            padded_image = cv2.copyMakeBorder(resized_img, 0, side_len-new_height,
+                          0, 0, cv2.BORDER_CONSTANT, value=(0,0,0))
+    else:
+        return resized_img,scale
+    return padded_image,scale
+
 
 def resize_image(img,algorithm,side_len=736,stride = 128):
     if algorithm == 'DB' or algorithm == 'PAN' or algorithm == 'CRNN':
@@ -73,7 +102,7 @@ def create_process_obj(algorithm,pred):
         return pred
 
 
-def create_loss_bin(algorithm):
+def create_loss_bin(algorithm,use_distil=False):
     bin_dict = {}
     if(algorithm=='DB'):
         keys = ['loss_total','loss_l1', 'loss_bce', 'loss_thresh']
@@ -90,6 +119,8 @@ def create_loss_bin(algorithm):
 
     for key in keys:
         bin_dict[key] = LossAccumulator()
+    if(use_distil):
+        bin_dict['loss_distil'] = LossAccumulator()
     return bin_dict
 
 def set_seed(seed):
@@ -108,9 +139,13 @@ def create_dir(path):
 
 def load_model(model,model_path):
     if torch.cuda.is_available():
-        model_dict = torch.load(model_path)['state_dict']
+        model_dict = torch.load(model_path)
     else:
-        model_dict = torch.load(model_path,map_location='cpu')['state_dict']
+        model_dict = torch.load(model_path,map_location='cpu')
+        
+    if('state_dict' in model_dict.keys()):
+        model_dict = model_dict['state_dict']
+
     try:
         model.load_state_dict(model_dict)
     except:
@@ -119,3 +154,11 @@ def load_model(model,model_path):
             state[key] = model_dict['module.' + key]
         model.load_state_dict(state)
     return model
+
+def merge_config(config,args):
+    for key_1 in config.keys():
+        if(isinstance(config[key_1],dict)):
+            for key_2 in config[key_1].keys():
+                if(key_2) in dir(args):
+                    config[key_1][key_2] = getattr(args,key_2)
+    return config
