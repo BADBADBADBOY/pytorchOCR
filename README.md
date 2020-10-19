@@ -76,6 +76,11 @@
 - [文本检测](./doc/md/文本检测训练文档.md)
 - [文本识别](./doc/md/文本识别训练文档.md)
 - [pytorch转onnx](./doc/md/pytorch_to_onnx.md)
+- [onnx转tensorrt](./doc/md/onnx_to_tensorrt.md)
+- [模型剪枝](./doc/md/模型剪枝.md)
+- [模型蒸馏](./doc/md/模型蒸馏.md)
+
+
 
 
 ***
