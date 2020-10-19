@@ -76,8 +76,8 @@ class FPN_Down_Fusion(nn.Module):
         super(FPN_Down_Fusion, self).__init__()
 
         self.fpn_down_conv1 = ConvBnRelu(3, 32, 1, 1, 0, with_relu=False)
-        self.fpn_down_conv2 = ConvBnRelu(128, 64, 1, 1, 0, with_relu=False) # for 3*3
-#         self.fpn_down_conv2 = ConvBnRelu(64, 64, 1, 1, 0, with_relu=False) # for 7*7
+#         self.fpn_down_conv2 = ConvBnRelu(128, 64, 1, 1, 0, with_relu=False) # for 3*3
+        self.fpn_down_conv2 = ConvBnRelu(64, 64, 1, 1, 0, with_relu=False) # for 7*7
         self.fpn_down_conv3 = ConvBnRelu(256, 128, 1, 1, 0, with_relu=False)
 
         self.fpn_down_conv4 = ConvBnRelu(32, 64, 3, 2, 1, with_relu=False)

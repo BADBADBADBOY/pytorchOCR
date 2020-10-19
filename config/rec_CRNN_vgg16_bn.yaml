@@ -4,18 +4,18 @@ base:
   pretrained: True
   inchannel: 512
   hiddenchannel: 128
-  img_shape: [32,280]
+  img_shape: [32,100]
   is_gray: True
   use_conv: False
-  use_attention: True
-  use_lstm: True
+  use_attention: False
+  use_lstm: False
   lstm_num: 2
   classes: 1000
-  n_epoch: 1200
-  start_val: 0
+  n_epoch: 100
+  start_val: 10
   show_step: 20
   checkpoints: ./checkpoint
-  save_epoch: 100
+  save_epoch: 1
   show_num: 10
   restore: False
   restore_file : ./DB.pth.tar
@@ -58,16 +58,16 @@ optimizer_decay:
 
 trainload:
   function: ptocr.dataloader.RecLoad.CRNNProcess,CRNNProcessTrain
-  train_file: /src/notebooks/fangxuwei_96/crnn-master/train_data/data/train_file/val.txt
-  key_file: /src/notebooks/fangxuwei_96/crnn-master/train_data/data/train_file/key.txt
+  train_file: /src/notebooks/detect_text/icdar2015/recognize/train_list.txt
+  key_file: /src/notebooks/detect_text/icdar2015/recognize/key.txt
   num_workers: 10
-  batch_size: 256
+  batch_size: 32
 
 testload:
   function: ptocr.dataloader.RecLoad.CRNNProcess,CRNNProcessTest
-  test_file: /src/notebooks/fangxuwei_96/crnn-master/train_data/data/train_file/val.txt
+  test_file: /src/notebooks/detect_text/icdar2015/recognize/test_list.txt
   num_workers: 5
-  batch_size: 64
+  batch_size: 32
   
 label_transform:
   function: ptocr.utils.transform_label,strLabelConverter

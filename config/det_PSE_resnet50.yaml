@@ -12,7 +12,7 @@ base:
   start_val: 400
   save_epoch: 100
   checkpoints: ./checkpoint
-  restore: True
+  restore: False
   restore_file: ./checkpoint/ag_PSE_bb_resnet50_he_FPN_Head_bs_8_ep_600/PSE_400.pth.tar
 
 backbone:

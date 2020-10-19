@@ -1,9 +1,3 @@
-#-*- coding:utf-8 _*-
-"""
-@author:fxw
-@file: pytorch_to_onnx.py.py
-@time: 2020/09/21
-"""
 import sys
 sys.path.append('./')
 import yaml

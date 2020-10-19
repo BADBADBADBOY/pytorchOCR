@@ -54,3 +54,5 @@ class DistilLoss(nn.Module):
                 continue
             loss+=self.diceloss(s_map[key],t_map[key],torch.ones(t_map[key].shape).cuda())
         return loss
+    
+    

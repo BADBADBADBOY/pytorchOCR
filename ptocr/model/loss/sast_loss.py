@@ -34,17 +34,17 @@ class SASTLoss(nn.Module):
         batch_size,_,w,h = f_score.shape
 
 
-        #score_loss add ohem
-        selected_masks = ohem_batch(f_score.squeeze(), l_score.squeeze(), l_mask.squeeze())
-        selected_masks = Variable(selected_masks).unsqueeze(1)
-        if torch.cuda.is_available():
-            selected_masks = selected_masks.cuda()
-        score_loss = self.dict_loss(f_score,l_score,selected_masks)
+#         #score_loss add ohem
+#         selected_masks = ohem_batch(f_score.squeeze(), l_score.squeeze(), l_mask.squeeze())
+#         selected_masks = Variable(selected_masks).unsqueeze(1)
+#         if torch.cuda.is_available():
+#             selected_masks = selected_masks.cuda()
+#         score_loss = self.dict_loss(f_score,l_score,selected_masks)
         
-#         #score_loss no ohem        
-#         intersection = torch.sum(f_score * l_score * l_mask)
-#         union = torch.sum(f_score * l_mask) + torch.sum(l_score * l_mask)
-#         score_loss = 1.0 - 2 * intersection / (union + 1e-5)
+        #score_loss no ohem        
+        intersection = torch.sum(f_score * l_score * l_mask)
+        union = torch.sum(f_score * l_mask) + torch.sum(l_score * l_mask)
+        score_loss = 1.0 - 2 * intersection / (union + 1e-5)
 
         # border loss
         l_border_split, l_border_norm = l_border[:,0:4,:,:], l_border[:,-1:,:,:]

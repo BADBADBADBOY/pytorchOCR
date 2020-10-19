@@ -165,6 +165,19 @@ class MobileNetV3_Small(nn.Module):
             Block(5, 96, 576, 96, hswish(), SeModule(96), 1),
             Block(5, 96, 576, 96, hswish(), SeModule(96), 1),
         )
+#         self.bneck = nn.Sequential(
+#             Block(3, 16, 16, 16, nn.ReLU(inplace=True), None, 1),
+#             Block(3, 16, 72, 24, nn.ReLU(inplace=True), SeModule(24), 2),
+#             Block(3, 24, 88, 24, nn.ReLU(inplace=True), None, 1),
+#             Block(5, 24, 96, 40, hswish(), SeModule(40), 2),
+#             Block(5, 40, 240, 40, hswish(), SeModule(40), 1),
+#             Block(5, 40, 240, 40, hswish(), None, 1),
+#             Block(5, 40, 120, 48, hswish(), SeModule(48), 2),
+#             Block(5, 48, 144, 48, hswish(), None, 1),
+#             Block(5, 48, 288, 96, hswish(), SeModule(96), 2),
+#             Block(5, 96, 576, 96, hswish(), SeModule(96), 1),
+#             Block(5, 96, 576, 96, hswish(), None, 1),
+#         )
         self.init_params()
 
     def init_params(self):

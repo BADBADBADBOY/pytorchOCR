@@ -1,5 +1,5 @@
 base:
-  gpu_id: '1'
+  gpu_id: '2'
   algorithm: SAST
   pretrained: True
   with_attention: True
@@ -65,15 +65,26 @@ optimizer_decay:
  gama: 0.3
  
 
+# trainload:
+#   function: ptocr.dataloader.DetLoad.SASTProcess_ori,SASTProcessTrain
+#   train_file: /src/notebooks/detect_text/icdar2015/train_list.txt
+#   num_workers: 12
+#   batch_size: 8
+#   min_crop_side_ratio: 0.3
+#   min_crop_size: 24
+#   min_text_size: 4
+
 trainload:
-  function: ptocr.dataloader.DetLoad.SASTProcess_ori,SASTProcessTrain
-  train_file: /src/notebooks/detect_text/icdar2015/train_list.txt
+  function: ptocr.dataloader.DetLoad.SASTProcess_ori1,SASTProcessTrain
+  data_dir: /src/notebooks/dataset_for_sast
+  train_file_target: icdar2015/train_label_json.txt 
+  train_file_extre: [icdar17_mlt_latin/train_label_json.txt,coco_text_icdar_4pts/train_label_json.txt,icdar2013/train_label_json.txt]
+  train_file_ratio: 0.5
   num_workers: 12
   batch_size: 8
   min_crop_side_ratio: 0.3
   min_crop_size: 24
   min_text_size: 4
-
 
 testload:
   function: ptocr.dataloader.DetLoad.SASTProcess_ori,SASTProcessTest

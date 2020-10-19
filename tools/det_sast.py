@@ -23,6 +23,8 @@ from tools.cal_rescall.script import cal_recall_precison_f1
 from tools.cal_rescall.cal_det import cal_det_metrics
 from ptocr.dataloader.DetLoad.SASTProcess_ori import alignCollate
 from ptocr.utils.util_function import create_process_obj
+torch.backends.cudnn.enabled = False
+
 
 GLOBAL_WORKER_ID = None
 GLOBAL_SEED = 2020
@@ -190,6 +192,7 @@ def TrainValProgram(config):
         log_write.set_names(title)
     
     for epoch in range(start_epoch,config['base']['n_epoch']):
+        train_dataset.gen_train_img()
         model.train()
         optimizer_decay(config, optimizer, epoch)
         loss_write = ModelTrain(train_data_loader, model, criterion, optimizer, loss_bin, config, epoch)
@@ -228,8 +231,8 @@ def TrainValProgram(config):
 
 
 if __name__ == "__main__":
-#     stream = open('./config/det_SAST_resnet50_ori_dataload.yaml', 'r', encoding='utf-8')
-    stream = open('./config/det_SAST_resnet50_3*3_ori_dataload.yaml', 'r', encoding='utf-8')
+    stream = open('./config/det_SAST_resnet50_ori_dataload.yaml', 'r', encoding='utf-8')
+#     stream = open('./config/det_SAST_resnet50_3*3_ori_dataload.yaml', 'r', encoding='utf-8')
     
     config = yaml.load(stream,Loader=yaml.FullLoader)
     TrainValProgram(config)

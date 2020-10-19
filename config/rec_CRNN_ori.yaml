@@ -1,18 +1,18 @@
 base:
-  gpu_id: '0'
+  gpu_id: '1'
   algorithm: CRNN
-  pretrained: True
-  inchannel: 96
-  hiddenchannel: 48
+  pretrained: False
+  inchannel: 512
+  hiddenchannel: 128
   img_shape: [32,280]
   is_gray: True
   use_conv: False
-  use_attention: False
+  use_attention: True
   use_lstm: False
-  lstm_num: 2
+  lstm_num: 1
   classes: 1000
-  n_epoch: 20
-  start_val: 1
+  n_epoch: 100
+  start_val: 0
   show_step: 20
   checkpoints: ./checkpoint
   save_epoch: 1
@@ -21,7 +21,7 @@ base:
   restore_file : ./DB.pth.tar
 
 backbone:
-  function: ptocr.model.backbone.reg_mobilev3,mobilenet_v3_small
+  function: ptocr.model.backbone.rec_crnn_backbone,rec_crnn_backbone
 
 head:
   function: ptocr.model.head.rec_CRNNHead,CRNN_Head
@@ -53,7 +53,7 @@ optimizer:
 
 optimizer_decay:
  function: ptocr.optimizer,adjust_learning_rate
- schedule: [5,8,11,14]
+ schedule: [2,6,8]
  gama: 0.1
 
 trainload:
@@ -68,11 +68,12 @@ testload:
   test_file: /src/notebooks/fangxuwei_96/crnn-master/train_data/data/train_file/val.txt
   num_workers: 5
   batch_size: 256
+
   
 label_transform:
   function: ptocr.utils.transform_label,strLabelConverter
   
 infer:
-  model_path: ''
-  path: ''
+  model_path: './checkpoint/ag_CRNN_bb_rec_crnn_backbone_he_CRNN_Head_bs_256_ep_100_crnn_lstm_num_1/CRNN_best.pth.tar'
+  path: './crnn_test_img'
   save_path: ''

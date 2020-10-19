@@ -1,9 +1,3 @@
-#-*- coding:utf-8 _*-
-"""
-@author:fxw
-@file: onnx_to_tensorrt.py.py
-@time: 2020/09/22
-"""
 import os
 import tensorrt as trt
 import pycuda.driver as cuda

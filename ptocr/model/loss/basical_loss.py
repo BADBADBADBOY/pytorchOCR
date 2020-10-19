@@ -181,6 +181,12 @@ class BalanceCrossEntropyLoss(nn.Module):
         balance_loss = (positive_loss.sum() + negative_loss.sum()) /\
             (positive_count + negative_count + self.eps)
         return balance_loss
+    
+    
+def focal_ctc_loss(ctc_loss,alpha=0.25,gamma=0.5): # 0.99,1
+    prob = torch.exp(-ctc_loss)
+    focal_loss = alpha*(1-prob).pow(gamma)*ctc_loss
+    return focal_loss.mean()
 
 
 class focal_bin_cross_entropy(nn.Module):
