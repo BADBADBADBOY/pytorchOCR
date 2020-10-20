@@ -90,9 +90,11 @@
 <img src="./doc/show/ocr2.jpg" width=600 height=600 />
 
 ***
-学习交流加群
-<img src="./doc/md/ocr.jpg" width=400 height=600 />
 
+### 学习交流加群
+
+<img src="./doc/md/ocr.jpg" width=400 height=600 />
+***
 ### 参考
 - https://github.com/PaddlePaddle/PaddleOCR
 - https://github.com/whai362/PSENet
