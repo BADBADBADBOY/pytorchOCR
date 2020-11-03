@@ -48,7 +48,7 @@ class DetModel(nn.Module):
         thresh,binary = self.seg_out(head_map)
         thresh = self.dequant(thresh)
         binary = self.dequant(binary)
-        thresh_binary = self.step_function(thresh,binary)
+        thresh_binary = self.step_function(binary,thresh)
         out = {}
         out['binary'] = binary
         out['thresh'] = thresh
