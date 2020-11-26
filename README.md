@@ -91,9 +91,9 @@
 
 ***
 
-### 学习交流加群
+### 有问题及交流加微信
 
-<img src="./doc/md/ocr.jpg" width=400 height=600 />
+微信号：fxwfzsxyq
 ***
 
 
