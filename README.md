@@ -76,8 +76,10 @@
 |-|-|-|-|
 |CRNN|no|81.2|-|
 |CRNN|yes|95.4|14.2|
-准确率对比图
-<img src="./doc/show/centerloss.png" width=600 height=400 /> 
+
+
+##### 准确率对比图
+<img src="./doc/show/centerloss.png" width=900 height=600 /> 
 
 ***
 
