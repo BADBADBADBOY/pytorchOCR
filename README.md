@@ -79,7 +79,7 @@
 
 
 ##### 准确率对比图
-<img src="./doc/show/centerloss.png" width=1200 height=800 /> 
+<img src="./doc/show/centerloss.png" width=1200 height=600 /> 
 
 ***
 
