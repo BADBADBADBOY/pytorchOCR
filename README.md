@@ -71,15 +71,12 @@
 |DB|resnet50|mobilev3|1.15|85.60%|74.72%|79.79%|1.28|
 ***
 ### CRNN+CTCLoss+CenterLoss
-这里使用100万训练集，10万测试集
+这里使用100万训练集，10万测试集，暂时有点问题
 |模型|use center loss|acc(%)|improve(%)|
 |-|-|-|-|
-|CRNN|no|81.2|-|
-|CRNN|yes|95.4|14.2|
+|CRNN|no|0|-|
+|CRNN|yes|0|0|
 
-
-##### 准确率对比图
-<img src="./doc/show/centerloss.png" width=1200 height=600 /> 
 
 ***
 
