@@ -8,8 +8,10 @@ import sys
 sys.path.append('./')
 import cv2
 import torch
+import time
 import os
 import argparse
+import random
 import numpy as np
 from tqdm import tqdm
 from torch.autograd import Variable
@@ -20,12 +22,21 @@ from ptocr.utils.util_function import create_module, create_loss_bin, \
 set_seed,save_checkpoint,create_dir
 from ptocr.utils.metrics import runningScore
 from ptocr.utils.logger import Logger
-from ptocr.utils.util_function import create_process_obj,merge_config
+from ptocr.utils.util_function import create_process_obj,merge_config,AverageMeter
 from ptocr.dataloader.RecLoad.CRNNProcess import alignCollate
-
+import copy 
 
 GLOBAL_WORKER_ID = None
 GLOBAL_SEED = 2020
+
+
+torch.manual_seed(GLOBAL_SEED)
+torch.cuda.manual_seed(GLOBAL_SEED)
+torch.cuda.manual_seed_all(GLOBAL_SEED)
+np.random.seed(GLOBAL_SEED)
+random.seed(GLOBAL_SEED)
+
+
 
 def worker_init_fn(worker_id):
     global GLOBAL_WORKER_ID
@@ -37,7 +48,10 @@ def worker_init_fn(worker_id):
 #         g[g != g] = 0   # replace all nan/inf in gradients to zero
 
 
-def ModelTrain(train_data_loader,LabelConverter,model, criterion, optimizer, loss_bin, config, epoch):
+def ModelTrain(train_data_loader,LabelConverter,model,center_model, criterion, optimizer,center_criterion,optimizer_center,center_flag,loss_bin, config, epoch):
+    batch_time = AverageMeter()
+    end = time.time()
+    
     for batch_idx, data in enumerate(train_data_loader):
 #         model.register_backward_hook(backward_hook)
         if(data is None):
@@ -49,20 +63,78 @@ def ModelTrain(train_data_loader,LabelConverter,model, criterion, optimizer, los
         if torch.cuda.is_available():
             imgs = imgs.cuda() 
         preds = model(imgs)
-        
+
         labels,labels_len = LabelConverter.encode(labels,preds.size(0))
         preds_size = Variable(torch.IntTensor([preds.size(0)] * config['trainload']['batch_size']))
         pre_batch['preds'],pre_batch['preds_size'] = preds,preds_size
         gt_batch['labels'],gt_batch['labels_len'] = labels,labels_len
         
-        loss = criterion(pre_batch, gt_batch)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        ctc_loss = criterion(pre_batch, gt_batch).cuda() 
+        metrics = {}
+        metrics['loss_total'] = 0.0
+        metrics['loss_center'] = 0.0
+        if center_criterion is not None and center_flag is True:
+            center_model.eval()
+            #####
+            feautures = preds.clone()
+            with torch.no_grad():
+                center_preds = center_model(imgs)
+
+            center_preds = torch.softmax(center_preds,-1)
+            confs, center_preds = center_preds.max(2)
+            center_preds = center_preds.squeeze(1).transpose(1, 0).contiguous()
+            confs = confs.transpose(1, 0).contiguous()
+
+#             confs = []
+#             for i in range(center_preds.shape[0]):
+#                 conf = []
+#                 for j in range(len(center_preds[i])):
+#                     conf.append(probs[i,j,center_preds[i][j]])
+#                 confs.append(conf)
+#             confs = torch.Tensor(confs).cuda()
+
+            b,t = center_preds.shape
+            feautures = feautures.transpose(1, 0).contiguous()
+
+            confs = confs.view(-1)
+            center_preds = center_preds.view(-1)
+            feautures = feautures.view(b*t,-1)
+
+
+            index = (center_preds>0) & (confs>config['loss']['label_score'])
+            center_preds = center_preds[index]
+            feautures = feautures[index]
+
+            center_loss = center_criterion(feautures,center_preds)*config['loss']['weight_center']
+
+            loss = ctc_loss + center_loss
+            
+            
+            metrics['loss_total'] = loss.item()
+            metrics['loss_ctc'] = ctc_loss.item()
+            metrics['loss_center'] = center_loss.item()
+
+            #####
+            optimizer_center.zero_grad()
+            optimizer.zero_grad()
+
+            loss.backward()
+            optimizer.step()
+
+            for param in center_criterion.parameters():
+                param.grad.data *= (1. / config['loss']['weight_center'])
+            optimizer_center.step()
+        else:
+            loss = ctc_loss
+            metrics['loss_ctc'] = ctc_loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         for key in loss_bin.keys():
-            loss_bin[key].loss_add(loss.item())
-
+            loss_bin[key].loss_add(metrics[key])
+        batch_time.update(time.time() - end)
+        end = time.time()
         if (batch_idx % config['base']['show_step'] == 0):
             log = '({}/{}/{}/{}) | ' \
                 .format(epoch, config['base']['n_epoch'], batch_idx, len(train_data_loader))
@@ -70,12 +142,15 @@ def ModelTrain(train_data_loader,LabelConverter,model, criterion, optimizer, los
 
             for i in range(len(bin_keys)):
                 log += bin_keys[i] + ':{:.4f}'.format(loss_bin[bin_keys[i]].loss_mean()) + ' | '
-            log += 'lr:{:.8f}'.format(optimizer.param_groups[0]['lr'])
+            log += 'lr:{:.8f}'.format(optimizer.param_groups[0]['lr'])+ ' | '
+            log+='batch_time:{:.2f} s'.format(batch_time.avg)+ ' | '
+            log+='total_time:{:.2f} min'.format(batch_time.avg * batch_idx / 60.0)+ ' | '
+            log+='ETA:{:.2f} min'.format(batch_time.avg*(len(train_data_loader)-batch_idx)/60.0)
             print(log)
     loss_write = []
     for key in list(loss_bin.keys()):
         loss_write.append(loss_bin[key].loss_mean())
-    return loss_write
+    return loss_write,loss_bin['loss_ctc'].loss_mean()
 
 
 def ModelEval(test_data_loader,LabelConverter,model,criterion,config):
@@ -138,6 +213,14 @@ def TrainValProgram(config):
     optimizer = create_module(config['optimizer']['function'])(config, model)
     optimizer_decay = create_module(config['optimizer_decay']['function'])
     
+    if config['loss']['use_center']:
+        center_criterion = create_module(config['loss']['center_function'])(config['base']['classes'],config['base']['classes'])
+        optimizer_center = torch.optim.Adam(center_criterion.parameters(), lr= config['loss']['center_lr'])
+        optimizer_decay_center = create_module(config['optimizer_decay_center']['function'])
+    else:
+        center_criterion = None
+        optimizer_center=None
+    
     
     train_data_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -158,7 +241,7 @@ def TrainValProgram(config):
         drop_last=True,
         pin_memory=True)
 
-    loss_bin = create_loss_bin(config['base']['algorithm'])
+    loss_bin = create_loss_bin(config['base']['algorithm'],use_center=config['loss']['use_center'])
 
     if torch.cuda.is_available():
         if (len(config['base']['gpu_id'].split(',')) > 1):
@@ -188,11 +271,21 @@ def TrainValProgram(config):
         title = list(loss_bin.keys())
         title.extend(['val_loss','test_acc','best_acc'])
         log_write.set_names(title)
-    
+    center_flag = False
+    center_model = None
+    if config['base']['finetune']:
+        start_epoch = 0
+        optimizer.param_groups[0]['lr'] = 0.0001
+        center_flag = True
+        center_model = copy.deepcopy(model)
     for epoch in range(start_epoch,config['base']['n_epoch']):
         model.train()
         optimizer_decay(config, optimizer, epoch)
-        loss_write = ModelTrain(train_data_loader,LabelConverter, model, criterion, optimizer, loss_bin, config, epoch)
+        if config['loss']['use_center']:
+            optimizer_decay_center(config, optimizer_center, epoch)
+        loss_write,loss_flag = ModelTrain(train_data_loader,LabelConverter, model,center_model, criterion, optimizer, center_criterion,optimizer_center,center_flag,loss_bin, config, epoch)
+#         if loss_flag < config['loss']['min_score']:
+#             center_flag = True
         if(epoch >= config['base']['start_val']):
             model.eval()
             val_acc,val_loss = ModelEval(test_data_loader,LabelConverter, model,criterion ,config)

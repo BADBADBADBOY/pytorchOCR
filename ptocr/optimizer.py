@@ -37,6 +37,12 @@ def adjust_learning_rate_poly(config, optimizer, epoch):
 
 def adjust_learning_rate(config, optimizer, epoch):
     if epoch in config['optimizer_decay']['schedule']:
-        config['optimizer']['base_lr'] =config['optimizer']['base_lr'] * config['optimizer_decay']['gama']
+        adjust_lr = optimizer.param_groups[0]['lr'] * config['optimizer_decay']['gama']
         for param_group in optimizer.param_groups:
-            param_group['lr'] = config['optimizer']['base_lr']
+            param_group['lr'] = adjust_lr
+            
+def adjust_learning_rate_center(config, optimizer, epoch):
+    if epoch in config['optimizer_decay_center']['schedule']:
+        adjust_lr = optimizer.param_groups[0]['lr'] * config['optimizer_decay_center']['gama']
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = adjust_lr
