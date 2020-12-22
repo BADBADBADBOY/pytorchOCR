@@ -1,6 +1,7 @@
 ## 基于pytorch的OCR库
 ***
 最近跟新：
+- 2020.12.22 更新CRNN+CTCLoss+CenterLoss训练
 - 2020.09.18 更新文本检测说明文档
 - 2020.09.12 更新DB,pse,pan,sast,crnn训练测试代码和预训练模型
 
@@ -70,15 +71,7 @@
 |DB|no|mobilev3|1.15|85.14%|72.84%|78.51%|-|
 |DB|resnet50|mobilev3|1.15|85.60%|74.72%|79.79%|1.28|
 ***
-### CRNN+CTCLoss+CenterLoss
-这里使用100万训练集，10万测试集，暂时有点问题
-|模型|use center loss|acc(%)|improve(%)|
-|-|-|-|-|
-|CRNN|no|0|-|
-|CRNN|yes|0|0|
 
-
-***
 
 ### 文档教程
 - [文本检测](./doc/md/文本检测训练文档.md)
