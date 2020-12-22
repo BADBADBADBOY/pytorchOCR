@@ -102,7 +102,7 @@ def create_process_obj(algorithm,pred):
         return pred
 
 
-def create_loss_bin(algorithm,use_distil=False):
+def create_loss_bin(algorithm,use_distil=False,use_center=False):
     bin_dict = {}
     if(algorithm=='DB'):
         keys = ['loss_total','loss_l1', 'loss_bce', 'loss_thresh']
@@ -113,7 +113,10 @@ def create_loss_bin(algorithm,use_distil=False):
     elif (algorithm == 'SAST'):
         keys = ['loss_total', 'loss_score', 'loss_border', 'loss_tvo', 'loss_tco']
     elif (algorithm == 'CRNN'):
-        keys = ['loss_ctc']
+        if use_center:
+            keys = ['loss_total','loss_ctc','loss_center']
+        else:
+            keys = ['loss_ctc']
     else:
         assert 1==2,'only support algorithm DB,SAST,PSE,PAN,CRNN !!!'
 
@@ -162,3 +165,21 @@ def merge_config(config,args):
                 if(key_2) in dir(args):
                     config[key_1][key_2] = getattr(args,key_2)
     return config
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
