@@ -264,7 +264,16 @@ def TrainValProgram(config):
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         best_acc = checkpoint['best_acc']
-        log_write = Logger(os.path.join(checkpoints, 'log.txt'), title=config['base']['algorithm'], resume=True)
+        if not config['loss']['use_center']:
+        	log_write = Logger(os.path.join(checkpoints, 'log.txt'), title=config['base']['algorithm'], resume=True)
+        if config['loss']['use_center']:
+            if os.path.exists(os.path.join(checkpoints, 'log_center.txt')):
+                log_write = Logger(os.path.join(checkpoints, 'log_center.txt'), title=config['base']['algorithm'], resume=True)
+            else:
+                log_write = Logger(os.path.join(checkpoints, 'log_center.txt'), title=config['base']['algorithm'])
+                title = list(loss_bin.keys())
+                title.extend(['val_loss','test_acc','best_acc'])
+                log_write.set_names(title)
     else:
         print('Training from scratch.')
         log_write = Logger(os.path.join(checkpoints, 'log.txt'), title=config['base']['algorithm'])
