@@ -1,4 +1,7 @@
 ## 基于pytorch的OCR库
+
+这里会有这个项目的代码详解和我的一些ocr经验和心得，我会慢慢更新，有兴趣可以看看，希望可以帮到新接触ocr的童鞋[CSDN博客](https://blog.csdn.net/fxwfxw7037681/category_10419715.html)
+
 ***
 最近跟新：
 - 2020.12.22 更新CRNN+CTCLoss+CenterLoss训练
