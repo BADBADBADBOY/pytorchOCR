@@ -306,7 +306,7 @@ def transform_img_shape(img, img_shape):
     img = np.array(img)
     H, W = img_shape
     h, w = img.shape[:2]
-    new_w = int((h / H) * w)
+    new_w = int((float(H)/ h) * w)
     if (new_w > W):
         img = cv2.resize(img, (W, H))
     else:
