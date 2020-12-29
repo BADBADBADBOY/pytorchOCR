@@ -102,8 +102,6 @@ class CRNN_Head(nn.Module):
             x = self.out(x)
         return x
 		
-	def backward_hook(self, module, grad_input, grad_output):
+    def backward_hook(self, module, grad_input, grad_output):
         for g in grad_input:
-            g[g != g] = 0   # replace all nan/inf in gradients to zero
-			
-			
+            g[g != g] = 0
