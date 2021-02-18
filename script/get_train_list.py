@@ -27,3 +27,4 @@ if __name__ == "__main__":
     parser.add_argument('--img_path', nargs='?', type=str, default=None)
     parser.add_argument('--save_path', nargs='?', type=str, default=None)
     args = parser.parse_args()
+    gen_train_file(args)
