@@ -1,1 +1,0 @@
-python3 ./tools/det_infer.py --config ./config/det_DB_mobilev3.yaml --model_path ./checkpoint/ag_DB_bb_mobilenet_v3_small_he_DB_Head_bs_16_ep_1200/DB_best.pth.tar --img_path /src/notebooks/detect_text/icdar2015/ch4_test_images  --result_save_path ./result --onnx_path ./onnx/DBnet.onnx --trt_path ./onnx/DBnet_batch.engine --batch_size 2 --max_size 1536 --add_padding
