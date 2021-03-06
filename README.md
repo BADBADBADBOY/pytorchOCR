@@ -4,6 +4,7 @@
 
 ***
 最近跟新：
+- 2021.03.06 更新CRNN backbone resnet 和 mobilev3 以及配置文件
 - 2020.12.22 更新CRNN+CTCLoss+CenterLoss训练
 - 2020.09.18 更新文本检测说明文档
 - 2020.09.12 更新DB,pse,pan,sast,crnn训练测试代码和预训练模型

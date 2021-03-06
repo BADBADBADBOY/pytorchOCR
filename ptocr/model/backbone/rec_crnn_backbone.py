@@ -30,17 +30,17 @@ class crnn_backbone(nn.Module):
             nc = 3
         base_channel = 64
         self.cnn = nn.Sequential(
-            conv_bn_relu(nc,base_channel,3,1,1),
+            conv_bn_relu(nc,base_channel,3,1,1,with_bn=True),
             nn.MaxPool2d(2,2),
-            conv_bn_relu(base_channel,base_channel*2,3,1,1),
+            conv_bn_relu(base_channel,base_channel*2,3,1,1,with_bn=True),
             nn.MaxPool2d(2, 2),
-            conv_bn_relu(base_channel*2,base_channel*4,3,1,1),
-            conv_bn_relu(base_channel*4,base_channel*4,3,1,1),
+            conv_bn_relu(base_channel*2,base_channel*4,3,1,1,with_bn=True),
+            conv_bn_relu(base_channel*4,base_channel*4,3,1,1,with_bn=True),
             nn.MaxPool2d((2,1),(2,1)),
             conv_bn_relu(base_channel*4,base_channel*8,3,1,1,with_bn=True),
             conv_bn_relu(base_channel*8,base_channel*8,3,1,1,with_bn=True),
             nn.MaxPool2d((2,1), (2,1)),
-            conv_bn_relu(base_channel*8,base_channel*8,(2,1),1,0)
+            conv_bn_relu(base_channel*8,base_channel*8,(2,1),1,0,with_bn=True)
             # conv_bn_relu(base_channel*8,base_channel*8,2,1,0)
         )
         
