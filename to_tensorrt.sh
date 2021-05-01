@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=2 python3 ./script/onnx_to_tensorrt.py --onnx_path ./onnx/PSEnet.onnx --trt_engine_path ./onnx/PSEnet_batch.engine --img_path /src/notebooks/detect_text/icdar2015/ch4_test_images/img_10.jpg --batch_size 2 --algorithm PSE --max_size 1536 --add_padding

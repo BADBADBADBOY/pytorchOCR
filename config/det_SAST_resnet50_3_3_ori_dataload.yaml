@@ -1,0 +1,100 @@
+base:
+  gpu_id: '1'
+  algorithm: SAST
+  pretrained: True
+  with_attention: True
+  crop_shape: [512,512]
+  n_epoch: 901
+  start_val: 5000
+  show_step: 20
+  checkpoints: ./checkpoint
+  save_epoch: 100
+  restore: False
+  restore_file : ./checkpoint/ag_SAST_bb_resnet50_he_SASTHead_bs_12_ep_2000/SAST_best.pth.tar
+
+backbone:
+  function: ptocr.model.backbone.det_resnet_sast_3_3,resnet50
+
+head:
+  function: ptocr.model.head.det_SASTHead,SASTHead
+#  function: ptocr.model.head.det_FPEM_FFM_Head,FPEM_FFM_Head
+#  function: ptocr.model.head.det_FPNHead,FPN_Head
+
+segout:
+  function: ptocr.model.segout.det_SAST_segout,SegDetector
+
+architectures:
+  model_function: ptocr.model.architectures.det_model,DetModel
+  loss_function: ptocr.model.architectures.det_model,DetLoss
+
+loss:
+  function: ptocr.model.loss.sast_loss,SASTLoss
+  tvo_lw: 1.5
+  tco_lw: 1.5
+  score_lw: 1.0
+  border_lw: 1.0
+
+# optimizer:
+#  function: ptocr.optimizer,AdamDecay
+#  base_lr: 0.001
+#  beta1: 0.9
+#  beta2: 0.999
+#  weight_decay: 0.00005
+
+optimizer:
+  function: ptocr.optimizer,RMSPropDecay
+  base_lr: 0.001
+  momentum: 0
+  alpha: 0.95
+  weight_decay: 0.00005
+  
+
+# optimizer:
+#   function: ptocr.optimizer,SGDDecay
+#   weight_decay: 0.00005
+#   base_lr: 0.005
+#   momentum: 0.95
+
+# optimizer_decay:
+#   function: ptocr.optimizer,adjust_learning_rate_poly
+#   factor: 0.9
+
+optimizer_decay:
+ function: ptocr.optimizer,adjust_learning_rate
+ schedule: [300,600,800,850]
+ gama: 0.3
+ 
+
+trainload:
+  function: ptocr.dataloader.DetLoad.SASTProcess_ori,SASTProcessTrain
+  train_file: /src/notebooks/MyworkData/huayandang/train_list.txt
+  num_workers: 12
+  batch_size: 8
+  min_crop_side_ratio: 0.3
+  min_crop_size: 24
+  min_text_size: 4
+
+
+testload:
+  function: ptocr.dataloader.DetLoad.SASTProcess_ori,SASTProcessTest
+  test_file: /src/notebooks/detect_text/icdar2015/test_list.txt
+  test_gt_path: /src/notebooks/detect_text/icdar2015/ch4_test_gts/
+  test_size: 1536
+  stride: 128
+  num_workers: 5
+  batch_size: 4
+
+postprocess:
+  function: ptocr.postprocess.SASTpostprocess,SASTPostProcess
+  is_poly: False
+  score_thresh: 0.5
+  nms_thresh: 0.2
+  sample_pts_num: 2
+  shrink_ratio_of_width: 0.3
+  expand_scale: 1.0
+  tcl_map_thresh: 0.7
+
+infer:
+  model_path: './checkpoint/ag_SAST_bb_resnet50_he_SASTHead_bs_8_ep_901/SAST_400.pth.tar'
+  path: '/src/notebooks/MyworkData/huayandang/train'
+  save_path: './result'

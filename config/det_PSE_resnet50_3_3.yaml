@@ -1,0 +1,87 @@
+base:
+  gpu_id: '0'
+  algorithm: PSE
+  pretrained: True
+  in_channels: [256, 512, 1024, 2048]
+  inner_channels: 256
+  classes: 7
+  crop_shape: [640,640]
+  shrink_ratio: 0.4
+  n_epoch: 601
+  show_step: 20
+  start_val: 400
+  save_epoch: 100
+  checkpoints: ./checkpoint
+  restore: False
+  restore_file: ./checkpoint/ag_PSE_bb_resnet50_he_FPN_Head_bs_8_ep_601/PSE_best.pth.tar
+
+backbone:
+  function: ptocr.model.backbone.det_resnet_3*3,resnet50
+
+head:
+#  function: ptocr.model.head.det_DBHead,DB_Head
+#  function: ptocr.model.head.det_FPEM_FFM_Head,FPEM_FFM_Head
+  function: ptocr.model.head.det_FPNHead,FPN_Head
+
+segout:
+  function: ptocr.model.segout.det_PSE_segout,SegDetector
+
+architectures:
+  model_function: ptocr.model.architectures.det_model,DetModel
+  loss_function: ptocr.model.architectures.det_model,DetLoss
+
+loss:
+  function: ptocr.model.loss.pse_loss,PSELoss
+  text_tatio: 0.7
+
+#optimizer:
+#  function: ptocr.optimizer,AdamDecay
+#  base_lr: 0.002
+#  beta1: 0.9
+#  beta2: 0.999
+
+optimizer:
+  function: ptocr.optimizer,SGDDecay
+  base_lr: 0.001
+  momentum: 0.99
+  weight_decay: 0.00005
+
+# optimizer_decay:
+#   function: ptocr.optimizer,adjust_learning_rate_poly
+#   factor: 0.9
+
+optimizer_decay:
+ function: ptocr.optimizer,adjust_learning_rate
+ schedule: [200,400,500]
+ gama: 0.1
+
+trainload:
+  function: ptocr.dataloader.DetLoad.PSEProcess,PSEProcessTrain
+  train_file: /src/notebooks/detect_text/icdar2015/train_list.txt
+  num_workers: 12
+  batch_size: 8
+
+testload:
+  function: ptocr.dataloader.DetLoad.PSEProcess,PSEProcessTest
+  test_file: /src/notebooks/detect_text/icdar2015/test_list.txt
+  test_gt_path: /src/notebooks/detect_text/icdar2015/ch4_test_gts/
+  test_size: 2240
+  stride: 32
+  num_workers: 5
+  batch_size: 1
+
+postprocess:
+  function: ptocr.postprocess.PSEpostprocess,PSEPostProcess
+  is_poly: False
+  binary_th: 1
+  scale: 1
+  min_kernel_area: 5
+  min_text_area: 800
+  min_score: 0.93
+  
+infer:
+  model_path: './checkpoint/ag_PSE_bb_resnet50_he_FPN_Head_bs_8_ep_600/PSE_best.pth.tar'
+  path: '/src/notebooks/detect_text/icdar2015/ch4_test_images'
+  save_path: './result'
+  
+  

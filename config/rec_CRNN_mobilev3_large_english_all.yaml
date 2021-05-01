@@ -1,0 +1,102 @@
+base:
+  gpu_id: '0,1'
+  algorithm: CRNN
+  pretrained: False
+  inchannel: 960
+  hiddenchannel: 96
+  img_shape: [32,100]
+  is_gray: True
+  use_conv: False
+  use_attention: False
+  use_lstm: True
+  lstm_num: 2
+  classes: 1000
+  max_iters: 300000
+  eval_iter: 10000
+  show_step: 100
+  checkpoints: ./checkpoint
+  save_epoch: 1
+  show_num: 10
+  restore: False
+  finetune: False
+  restore_file : ./checkpoint/ag_CRNN_bb_rec_crnn_backbone_he_CRNN_Head_bs_256_ep_20_20210207English/CRNN_best.pth.tar
+
+backbone:
+  function: ptocr.model.backbone.rec_mobilev3_bd,mobilenet_v3_large
+
+head:
+  function: ptocr.model.head.rec_CRNNHead,CRNN_Head
+
+architectures:
+  model_function: ptocr.model.architectures.rec_model,RecModel
+  loss_function: ptocr.model.architectures.rec_model,RecLoss
+
+loss:
+  function: ptocr.model.loss.ctc_loss,CTCLoss
+  use_ctc_weight: False
+  reduction: 'mean' 
+  center_function: ptocr.model.loss.centerloss,CenterLoss
+  use_center: False
+  center_lr: 0.5
+  label_score: 0.95
+#   min_score: 0.01
+  weight_center: 0.000001
+  
+
+optimizer:
+ function: ptocr.optimizer,AdamDecay
+ base_lr: 0.001
+ beta1: 0.9
+ beta2: 0.999
+ weight_decay: 0.00005
+
+# optimizer:
+#   function: ptocr.optimizer,SGDDecay
+#   base_lr: 0.002
+#   momentum: 0.99
+#   weight_decay: 0.00005
+
+# optimizer_decay:
+#   function: ptocr.optimizer,adjust_learning_rate_poly
+#   factor: 0.9
+
+optimizer_decay:
+ function: ptocr.optimizer,adjust_learning_rate
+ schedule: [100000,200000]
+ gama: 0.1
+ 
+optimizer_decay_center:
+ function: ptocr.optimizer,adjust_learning_rate_center
+ schedule: [100000,200000]
+ gama: 0.1
+ 
+trainload:
+  function: ptocr.dataloader.RecLoad.CRNNProcess1,GetDataLoad
+  train_file: ['/src/notebooks/MyworkData/EnglishCrnnData/train_lmdb/SynthText/','/src/notebooks/MyworkData/EnglishCrnnData/train_lmdb/MJSynth']
+  batch_ratio: [0.5,0.5]
+  key_file: /src/notebooks/MyworkData/EnglishCrnnData/key_new.txt
+  bg_path: ./bg_img/
+  num_workers: 16
+  batch_size: 512
+
+testload:
+  function: ptocr.dataloader.RecLoad.CRNNProcess1,CRNNProcessTest
+  test_file: /src/notebooks/MyworkData/EnglishCrnnData/val_new.txt
+  num_workers: 8
+  batch_size: 256
+
+  
+label_transform:
+  function: ptocr.utils.transform_label,strLabelConverter
+  
+transform:
+  function: ptocr.dataloader.RecLoad.DataAgument,transform_label
+  t_type: lower
+  char_type: En
+  
+infer:
+#   model_path: './checkpoint/ag_CRNN_bb_rec_crnn_backbone_he_CRNN_Head_bs_256_ep_10_synthtext/CRNN_best.pth.tar'
+  model_path: './checkpoint/ag_CRNN_bb_mobilenet_v3_large_he_CRNN_Head_bs_512_ep_300000_mobilev2_alldata/CRNN_210000.pth.tar'
+#   path: '/src/notebooks/MyworkData/EnglishCrnnData/image/2697/6/107_Ramification_62303.jpg'
+  path: './english_val_img/'
+  save_path: ''
