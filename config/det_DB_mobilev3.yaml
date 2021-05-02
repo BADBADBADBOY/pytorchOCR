@@ -20,8 +20,8 @@ backbone:
   function: ptocr.model.backbone.det_mobilev3,mobilenet_v3_small
 
 head:
-#   function: ptocr.model.head.det_DBHead,DB_Head
- function: ptocr.model.head.det_FPEM_FFM_Head,FPEM_FFM_Head
+  function: ptocr.model.head.det_DBHead,DB_Head
+#  function: ptocr.model.head.det_FPEM_FFM_Head,FPEM_FFM_Head
 #  function: ptocr.model.head.det_FPNHead,FPN_Head
 
 segout:
