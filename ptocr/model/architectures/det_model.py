@@ -20,9 +20,15 @@ class DetModel(nn.Module):
             self.head = create_module(config['head']['function']) \
                 (config['base']['in_channels'],
                  config['base']['inner_channels'])
-
+        self.mulclass = False
         if (config['base']['algorithm']) == 'DB':
-            self.seg_out = create_module(config['segout']['function'])(config['base']['inner_channels'],
+            if 'n_class' in config['base'].keys():
+                self.mulclass = True
+                self.seg_out = create_module(config['segout']['function'])(config['base']['n_class'],config['base']['inner_channels'],
+                                                                       config['base']['k'],
+                                                                       config['base']['adaptive'])
+            else:
+                self.seg_out = create_module(config['segout']['function'])(config['base']['inner_channels'],
                                                                        config['base']['k'],
                                                                        config['base']['adaptive'])
         elif (config['base']['algorithm']) == 'PAN':
@@ -40,14 +46,21 @@ class DetModel(nn.Module):
     def forward(self, data):
         if self.training:
             if self.algorithm == "DB":
-                img, gt, gt_mask, thresh_map, thresh_mask = data
+                if self.mulclass:
+                    img, gt,gt_class, gt_mask, thresh_map, thresh_mask = data
+                else:
+                    img, gt, gt_mask, thresh_map, thresh_mask = data
                 if torch.cuda.is_available():
+                    if self.mulclass:
+                        gt_class = gt_class.cuda()
                     img, gt, gt_mask, thresh_map, thresh_mask = \
                         img.cuda(), gt.cuda(), gt_mask.cuda(), thresh_map.cuda(), thresh_mask.cuda()
                 gt_batch = dict(gt=gt)
                 gt_batch['mask'] = gt_mask
                 gt_batch['thresh_map'] = thresh_map
                 gt_batch['thresh_mask'] = thresh_mask
+                if self.mulclass:
+                    gt_batch['gt_class'] = gt_class
 
             elif self.algorithm == "PSE":
                 img, gt_text, gt_kernels, train_mask = data
@@ -98,8 +111,12 @@ class DetLoss(nn.Module):
         super(DetLoss, self).__init__()
         self.algorithm = config['base']['algorithm']
         if (config['base']['algorithm']) == 'DB':
-            self.loss = create_module(config['loss']['function'])(config['loss']['l1_scale'],
-                                                                  config['loss']['bce_scale'])
+            if 'n_class' in config['base'].keys():
+                self.loss = create_module(config['loss']['function'])(config['base']['n_class'],config['loss']['l1_scale'],
+                                                 config['loss']['bce_scale'],config['loss']['class_scale'])
+            else:
+                self.loss = create_module(config['loss']['function'])(config['loss']['l1_scale'],config['loss']['bce_scale'])
+                
         elif (config['base']['algorithm']) == 'PAN':
             self.loss = create_module(config['loss']['function'])(config['loss']['kernel_rate'],
                                                                   config['loss']['agg_dis_rate'])

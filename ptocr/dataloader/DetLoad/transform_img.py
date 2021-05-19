@@ -76,6 +76,38 @@ class RandomCropData():
                 new_dotcare.append(dont_care[i])
 
         return img, new_polys, new_dotcare
+    
+    def process_mul(self, img, polys, classes, dont_care):
+        all_care_polys = []
+        for i in range(len(dont_care)):
+            if (dont_care[i] is False):
+                all_care_polys.append(polys[i])
+        crop_x, crop_y, crop_w, crop_h = self.crop_area(img, all_care_polys)
+        scale_w = self.size[0] / crop_w
+        scale_h = self.size[1] / crop_h
+        scale = min(scale_w, scale_h)
+        h = int(crop_h * scale)
+        w = int(crop_w * scale)
+        padimg = np.zeros(
+            (self.size[1], self.size[0], img.shape[2]), img.dtype)
+        padimg[:h, :w] = cv2.resize(
+            img[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w], (w, h))
+        img = padimg
+
+        new_polys = []
+        new_dotcare = []
+        new_classes = []
+        
+        for i in range(len(polys)):
+            poly = polys[i]
+            poly = ((np.array(poly) -
+                     (crop_x, crop_y)) * scale)
+            if not self.is_poly_outside_rect(poly, 0, 0, w, h):
+                new_polys.append(poly)
+                new_dotcare.append(dont_care[i])
+                new_classes.append(classes[i])
+
+        return img, new_polys,new_classes, new_dotcare
 
     def is_poly_in_rect(self, poly, x, y, w, h):
         poly = np.array(poly)
@@ -259,6 +291,10 @@ class Random_Augment():
     def random_crop_db(self, img, polys, dont_care):
         img, new_polys, new_dotcare = self.random_crop_data.process(img, polys, dont_care)
         return img, new_polys, new_dotcare
+    
+    def random_crop_db_mul(self, img, polys,classes, dont_care):
+        img, new_polys, new_classes,new_dotcare = self.random_crop_data.process_mul(img, polys, classes,dont_care)
+        return img, new_polys,new_classes, new_dotcare
 
     def random_crop_pse(self, imgs, ):
         h, w = imgs[0].shape[0:2]

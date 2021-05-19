@@ -6,7 +6,25 @@
 """
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
+
+class MulClassLoss(nn.Module):
+    def __init__(self, ):
+        super(MulClassLoss, self).__init__()
+        
+    def forward(self,pre_score,gt_score,n_class):
+        gt_score = gt_score.reshape(-1)
+        index = gt_score>0
+        if index.sum()>0:
+            pre_score = pre_score.permute(0,2,3,1).reshape(-1,n_class)
+            gt_score = gt_score[index]
+            gt_score = gt_score - 1
+            pre_score = pre_score[index]
+            class_loss = F.cross_entropy(pre_score,gt_score.long(), ignore_index=-1) 
+        else:
+            class_loss = torch.tensor(0.0).cuda()
+        return class_loss
 
 
 class CrossEntropyLoss(nn.Module):

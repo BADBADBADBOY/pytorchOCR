@@ -16,6 +16,7 @@ from PIL import Image
 import numpy as np
 from tqdm import tqdm
 import onnxruntime
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 from ptocr.utils.util_function import create_module,resize_image_batch
 from ptocr.utils.util_function import create_process_obj,create_dir,load_model
@@ -115,19 +116,28 @@ class TestProgram():
                 out = output[0].reshape(int(args.batch_size),7,test_size,test_size)
             
             out = torch.Tensor(out)
-        
-#         import pdb
-#         pdb.set_trace()
-        
+
         if isinstance(out,dict):
             img_num = out['f_score'].shape[0]
+        elif isinstance(out,tuple):
+            img_num = out[0].shape[0]
         else:
             img_num = out.shape[0]
 
         if(self.config['base']['algorithm']=='SAST'):
             scales = [(1.0/scales[i][1],1.0/scales[i][0],ori_imgs[i].shape[0],ori_imgs[i].shape[1]) for i in range(len(scales))]
 
-        out = create_process_obj(self.config['base']['algorithm'],out)
+        out = create_process_obj(self.config,out)
+        
+        if 'n_class' in self.config['base'].keys():
+            out,out_class = out
+            b,_,w,h = out_class.shape
+            out_class = out_class.permute(0,2,3,1).reshape(-1,self.config['base']['n_class'])
+            out_class = F.softmax(out_class,-1)
+            out_class = out_class.max(1)[1].reshape(b,w,h).unsqueeze(1)
+            bbox_batch, score_batch,class_batch = self.img_process(out,out_class.cpu().numpy(), scales)
+            return bbox_batch,score_batch,class_batch
+        
         bbox_batch, score_batch = self.img_process(out, scales)
         return bbox_batch,score_batch
 
@@ -145,6 +155,28 @@ def InferOneImg(bin,img,image_name,save_path):
                 fid_res.write(bbox_str)
         cv2.imwrite(os.path.join(save_path, 'result_img', image_name[i] + '.jpg'), img_show)
 
+color_rgb = [(0,0,255),(0,255,0),(255,0,0),(255,255,0),(255,0,255),(0,255,255),(156,102,31),(255,192,203),(160,32,240),(115,74,18)]        
+        
+def InferOneImgMul(bin,img,image_name,save_path,n_class): 
+    bbox_batch, score_batch,class_batch = bin.infer_img(img)
+    colors = {}
+    for i in range(1,n_class+1):
+        colors[str(i-1)] = color_rgb[i-1]
+    for i in range(len(bbox_batch)):
+        img_show = img[i].copy()
+        with open(os.path.join(save_path, 'result_txt', 'res_' + image_name[i] + '.txt'), 'w+', encoding='utf-8') as fid_res:
+            bboxes = bbox_batch[i]
+            classes = class_batch[i]
+            tag = 0
+            for bbox in bboxes:
+                bbox = bbox.reshape(-1, 2).astype(np.int)
+                img_show = cv2.drawContours(img_show, [bbox], -1, colors[str(int(classes[tag]))], 2)
+                bbox_str = [str(x) for x in bbox.reshape(-1)]
+                bbox_str = ','.join(bbox_str) + '\n'
+                fid_res.write(bbox_str)
+                tag+=1
+        cv2.imwrite(os.path.join(save_path, 'result_img', image_name[i] + '.jpg'), img_show)
+        
 def InferImage(config):
     path = config['infer']['path']
     save_path = config['infer']['save_path']
@@ -159,7 +191,10 @@ def InferImage(config):
         bar = tqdm(total=len(batch_imgs))
         for i in range(len(batch_imgs)):
             bar.update(1)
-            InferOneImg(test_bin, batch_imgs[i],batch_img_names[i], save_path)
+            if 'n_class' in config['base'].keys():
+                InferOneImgMul(test_bin, batch_imgs[i],batch_img_names[i], save_path,config['base']['n_class'])
+            else:
+                InferOneImg(test_bin, batch_imgs[i],batch_img_names[i], save_path)
         bar.close()
 
     else:

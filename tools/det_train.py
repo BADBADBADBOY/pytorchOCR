@@ -165,7 +165,7 @@ def TrainValProgram(args):
     criterion = create_module(config['architectures']['loss_function'])(config)
     train_dataset = create_module(config['trainload']['function'])(config)
     test_dataset = create_module(config['testload']['function'])(config)
-    optimizer = create_module(config['optimizer']['function'])(config, model)
+    optimizer = create_module(config['optimizer']['function'])(config, model.parameters())
     optimizer_decay = create_module(config['optimizer_decay']['function'])
     img_process = create_module(config['postprocess']['function'])(config)
     
@@ -195,7 +195,7 @@ def TrainValProgram(args):
     use_distil = False
     if args.t_config is not None:
         use_distil = True
-    loss_bin = create_loss_bin(config['base']['algorithm'],use_distil)
+    loss_bin = create_loss_bin(config,use_distil)
 
     if torch.cuda.is_available():
         if (len(config['base']['gpu_id'].split(',')) > 1):

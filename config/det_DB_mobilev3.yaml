@@ -14,7 +14,7 @@ base:
   checkpoints: ./checkpoint
   save_epoch: 100
   restore: False
-  restore_file : ./checkpoint/ag_DB_bb_mobilenet_v3_small_he_DB_Head_bs_16_ep_1200_mobile_slim_all/DB_best.pth.tar
+  restore_file : ./checkpoint/DB_best.pth.tar
 
 backbone:
   function: ptocr.model.backbone.det_mobilev3,mobilenet_v3_small
@@ -82,6 +82,6 @@ postprocess:
   min_size: 3
 
 infer:
-  model_path: './checkpoint/ag_DB_bb_mobilenet_v3_small_he_DB_Head_bs_16_ep_1200/DB_best.pth.tar'
+  model_path: './checkpoint/DB_best.pth.tar'
   path: '/src/notebooks/detect_text/icdar2015/ch4_test_images'
   save_path: './result'

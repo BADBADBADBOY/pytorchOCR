@@ -132,8 +132,13 @@ class LossAccumulator():
     def loss_clear(self):
         self.loss_items = []
 
-def create_process_obj(algorithm,pred):
+def create_process_obj(config,pred):
+    algorithm = config['base']['algorithm']
+    
     if(algorithm=='DB'):
+        if 'n_class' in config['base'].keys():
+            pred,pred_class = pred
+            return pred.cpu().numpy(),pred_class
         return pred.cpu().numpy()
     elif(algorithm=='SAST'):
         pred['f_score'] = pred['f_score'].cpu().numpy()
@@ -145,10 +150,15 @@ def create_process_obj(algorithm,pred):
         return pred
 
 
-def create_loss_bin(algorithm,use_distil=False,use_center=False):
+def create_loss_bin(config,use_distil=False,use_center=False):
+    algorithm = config['base']['algorithm']
     bin_dict = {}
     if(algorithm=='DB'):
-        keys = ['loss_total','loss_l1', 'loss_bce', 'loss_thresh']
+        if 'n_class' in config['base'].keys():
+            keys = ['loss_total','loss_l1', 'loss_bce','loss_class', 'loss_thresh']
+        else:
+            keys = ['loss_total','loss_l1', 'loss_bce', 'loss_thresh']
+    
     elif(algorithm=='PSE'):
         keys = ['loss_total','loss_kernel', 'loss_text']
     elif(algorithm=='PAN'):

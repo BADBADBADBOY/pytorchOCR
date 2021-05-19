@@ -27,6 +27,7 @@ class MakeSegMap():
         self.shrink_ratio = shrink_ratio
         self.is_training = is_training
         self.algorithm = algorithm
+        
     def process(self, img,polys,dontcare):
         '''
         requied keys:
@@ -77,7 +78,61 @@ class MakeSegMap():
         if self.algorithm == 'PAN':
             return img,gt_text,gt_text_key,gt,gt_kernel_key,mask
         return img,gt,mask
+    
+    def process_mul(self, img,polys,classes,dontcare):
+        '''
+        requied keys:
+            image, polygons, ignore_tags, filename
+        adding keys:
+            mask
+        '''
+        h, w = img.shape[:2]
+        if self.is_training:
+            polys, dontcare = self.validate_polygons(
+                polys, dontcare, h, w)
+        gt = np.zeros((h, w), dtype=np.float32)
+        gt_class = np.zeros((h, w), dtype=np.float32)
+        mask = np.ones((h, w), dtype=np.float32)
+        
+        if self.algorithm =='PAN':
+            gt_text = np.zeros((h, w), dtype=np.float32)
+            gt_text_key = np.zeros((h, w), dtype=np.float32)
+            gt_kernel_key = np.zeros((h, w), dtype=np.float32)
 
+        for i in range(len(polys)):
+            polygon = polys[i]
+            height = max(polygon[:, 1]) - min(polygon[:, 1])
+            width = max(polygon[:, 0]) - min(polygon[:, 0])
+            if dontcare[i] or min(height, width) < self.min_text_size:
+                cv2.fillPoly(mask, polygon.astype(
+                    np.int32)[np.newaxis, :, :], 0)
+                dontcare[i] = True
+            else:
+                if self.algorithm == 'PAN':
+                    cv2.fillPoly(gt_text, [polygon.astype(np.int32)], 1)
+                    cv2.fillPoly(gt_text_key, [polygon.astype(np.int32)], i + 1)
+                polygon_shape = Polygon(polygon)
+                distance = polygon_shape.area * \
+                           (1 - np.power(self.shrink_ratio, 2)) / polygon_shape.length
+                subject = [tuple(l) for l in polys[i]]
+                padding = pyclipper.PyclipperOffset()
+                padding.AddPath(subject, pyclipper.JT_ROUND,
+                                pyclipper.ET_CLOSEDPOLYGON)
+                shrinked = padding.Execute(-distance)
+                if shrinked == []:
+                    cv2.fillPoly(mask, polygon.astype(
+                        np.int32)[np.newaxis, :, :], 0)
+                    dontcare[i] = True
+                    continue
+                shrinked = np.array(shrinked[0]).reshape(-1, 2)
+                cv2.fillPoly(gt, [shrinked.astype(np.int32)], 1)
+                cv2.fillPoly(gt_class, polygon.astype(np.int32)[np.newaxis, :, :], 1+classes[i])
+                if self.algorithm == 'PAN':
+                    cv2.fillPoly(gt_kernel_key, [shrinked.astype(np.int32)], i + 1)
+        if self.algorithm == 'PAN':
+            return img,gt_text,gt_text_key,gt,gt_kernel_key,mask
+        return img,gt,gt_class,mask
+    
     def validate_polygons(self, polygons, ignore_tags, h, w):
         '''
         polygons (numpy.array, required): of shape (num_instances, num_points, 2)

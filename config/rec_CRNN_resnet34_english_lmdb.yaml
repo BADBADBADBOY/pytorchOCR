@@ -1,5 +1,5 @@
 base:
-  gpu_id: '1'
+  gpu_id: '0'
   algorithm: CRNN
   pretrained: False
   inchannel: 512
@@ -15,9 +15,9 @@ base:
   checkpoints: ./checkpoint
   save_epoch: 1
   show_num: 10
-  restore: False
+  restore: True
   finetune: False
-  restore_file : ./checkpoint/
+  restore_file : ./checkpoint/ag_CRNN_bb_resnet34_he_CRNN_Head_bs_512_ep_8_no_attention_no_weight/CRNN_best.pth.tar
 
 backbone:
   function: ptocr.model.backbone.reg_resnet_bd,resnet34
@@ -54,7 +54,7 @@ trainload:
   train_file: '/src/notebooks/MyworkData/EnglishCrnnData/train_lmdb/SynthText/'
   key_file: /src/notebooks/MyworkData/EnglishCrnnData/key_new.txt
   bg_path: ./bg_img/
-  num_workers: 10
+  num_workers: 16
   batch_size: 512
 
 valload:

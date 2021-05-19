@@ -4,6 +4,7 @@
 
 ***
 最近跟新：
+- 2021.05.19 更新基于DBnet的多语种文本检测。
 - 2021.05.01 更新CRNN 训练，解决了多gpu训练问题，更换成lmdb训练，需要将图片先转成lmdb（在script文件夹中有多进程将图片转成lmdb的代码），做了一些训练优化，模型结构更改（训练时使用名字中带lmdb的yaml文件），实际训练效果如下表。
 - 2021.03.26 更新CRNN 训练效果，代码整理后上传
 - 2021.03.06 更新CRNN backbone resnet 和 mobilev3 以及配置文件
@@ -106,6 +107,18 @@
 ### 文本检测效果
 <img src="./doc/show/ocr1.jpg" width=600 height=600 />     
 <img src="./doc/show/ocr2.jpg" width=600 height=600 />
+
+***
+
+### Dbnet多语种文本检测效果
+
+#### 生成数据集：
+<img src="./doc/show/2.jpg" width=600 height=600 />
+
+#### 公开数据集：
+<img src="./doc/show/1.jpg" width=600 height=600 />     
+<img src="./doc/show/3.jpg" width=500 height=600 />
+
 
 ***
 
